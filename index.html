@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinançasPro | Dashboard Inteligente</title>
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div id="app" class="dashboard-layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="brand flex items-center gap-md">
+          <span class="material-symbols-rounded" style="font-size: 32px;">account_balance</span>
+          <h1 style="color: white; font-size: 24px;">Finanças<span style="font-weight: 400;">Pro</span></h1>
+        </div>
+        
+        <nav class="flex flex-col gap-sm" id="sidebar-nav">
+          <a href="#dashboard" class="nav-link active" data-view="dashboard">
+            <span class="material-symbols-rounded">dashboard</span>
+            Dashboard
+          </a>
+          <a href="#cartoes" class="nav-link" data-view="cartoes">
+            <span class="material-symbols-rounded">credit_card</span>
+            Meus Cartões
+          </a>
+          <a href="#dividas" class="nav-link" data-view="dividas">
+            <span class="material-symbols-rounded">account_balance_wallet</span>
+            Gestão de Dívidas
+          </a>
+          <a href="#investimentos" class="nav-link" data-view="investimentos">
+            <span class="material-symbols-rounded">trending_up</span>
+            Investimentos
+          </a>
+          <a href="#configuracoes" class="nav-link" data-view="configuracoes">
+            <span class="material-symbols-rounded">settings</span>
+            Configurações
+          </a>
+        </nav>
+
+        <div style="margin-top: auto; padding: var(--spacing-md); background: rgba(255,255,255,0.05); border-radius: var(--radius-lg);">
+          <p class="text-muted" style="color: rgba(255,255,255,0.5); font-size: 12px; margin-bottom: 4px;">PLANO ATUAL</p>
+          <p style="font-weight: 600;">Premium Mensal</p>
+        </div>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="main-content" id="main-content">
+        <!-- Content will be injected here -->
+      </main>
+    </div>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
