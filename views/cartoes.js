@@ -1,83 +1,306 @@
+import {
+  getCards, addCard, updateCard, deleteCard,
+  addTransaction, formatCurrency, CARD_COLORS
+} from '../store.js';
+import { openModal, confirmDialog } from '../modal.js';
+
 export function renderCartoes() {
+  const cards = getCards();
+
   return `
     <header class="flex justify-between items-center">
       <div>
         <h2>Meus Cartões</h2>
         <p class="text-muted">Gerencie seus limites, faturas e configurações de cartões.</p>
       </div>
-      <button class="btn-primary flex items-center gap-sm">
+      <button class="btn-primary flex items-center gap-sm" id="btn-new-card">
         <span class="material-symbols-rounded">add</span>
         Novo Cartão
       </button>
     </header>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: var(--spacing-lg);">
-      <!-- Mastercard -->
-      <div class="card" style="background: linear-gradient(135deg, #1a1c1e 0%, #2f3033 100%); color: white; position: relative; overflow: hidden; height: 220px; display: flex; flex-direction: column; justify-content: space-between;">
-        <div class="flex justify-between items-start">
-          <div>
-            <p style="font-size: 12px; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px;">Saldo Disponível</p>
-            <h3 style="color: white; font-size: 24px;">R$ 15.750,00</h3>
-          </div>
-          <span class="material-symbols-rounded" style="font-size: 40px; opacity: 0.8;">contactless</span>
+    <div class="cards-grid">
+      ${cards.map(card => renderCardItem(card)).join('')}
+      ${cards.length === 0 ? `
+        <div class="card flex flex-col items-center gap-lg" style="justify-content: center; padding: var(--spacing-2xl); grid-column: 1 / -1;">
+          <span class="material-symbols-rounded" style="font-size: 64px; color: var(--color-on-surface-variant); opacity: 0.3;">credit_card_off</span>
+          <p class="text-muted" style="font-size: 16px;">Nenhum cartão cadastrado.</p>
+          <button class="btn-primary" id="btn-new-card-empty">
+            <span class="material-symbols-rounded">add</span>
+            Adicionar Cartão
+          </button>
         </div>
-        
-        <div class="flex justify-between items-end">
-          <div>
-            <p style="font-family: var(--font-data); font-size: 18px; letter-spacing: 2px; margin-bottom: 8px;">**** **** **** 8842</p>
-            <p style="font-size: 14px; opacity: 0.8;">DIEGO RODRIGUES</p>
-          </div>
-          <div style="text-align: right;">
-            <p style="font-size: 10px; opacity: 0.6;">VALIDADE</p>
-            <p style="font-weight: 600;">12/28</p>
-          </div>
-        </div>
-        <!-- Decorative circles -->
-        <div style="position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.03); border-radius: 50%;"></div>
-      </div>
-
-      <!-- Visa -->
-      <div class="card" style="background: linear-gradient(135deg, #2e4ed2 0%, #4b69ec 100%); color: white; position: relative; overflow: hidden; height: 220px; display: flex; flex-direction: column; justify-content: space-between;">
-        <div class="flex justify-between items-start">
-          <div>
-            <p style="font-size: 12px; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px;">Saldo Disponível</p>
-            <h3 style="color: white; font-size: 24px;">R$ 4.200,00</h3>
-          </div>
-          <span class="material-symbols-rounded" style="font-size: 40px; opacity: 0.8;">contactless</span>
-        </div>
-        
-        <div class="flex justify-between items-end">
-          <div>
-            <p style="font-family: var(--font-data); font-size: 18px; letter-spacing: 2px; margin-bottom: 8px;">**** **** **** 1159</p>
-            <p style="font-size: 14px; opacity: 0.8;">DIEGO RODRIGUES</p>
-          </div>
-          <div style="text-align: right;">
-            <p style="font-size: 10px; opacity: 0.6;">VALIDADE</p>
-            <p style="font-weight: 600;">08/26</p>
-          </div>
-        </div>
-        <div style="position: absolute; right: -20px; top: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
-      </div>
+      ` : ''}
     </div>
 
-    <!-- Bill Details -->
-    <section class="stat-grid" style="margin-top: var(--spacing-lg);">
-      <div class="card">
-        <h3 style="margin-bottom: var(--spacing-md);">Fatura Atual (Black)</h3>
-        <div class="stat-value text-error">R$ 1.250,00</div>
-        <p class="text-muted" style="margin-top: 8px;">Vence em 15 de Maio</p>
-        <button class="btn-primary" style="margin-top: var(--spacing-lg); width: 100%; justify-content: center;">Pagar Fatura</button>
-      </div>
-      <div class="card">
-        <h3 style="margin-bottom: var(--spacing-md);">Fatura Atual (Infinity)</h3>
-        <div class="stat-value text-error">R$ 840,00</div>
-        <p class="text-muted" style="margin-top: 8px;">Vence em 10 de Maio</p>
-        <button class="btn-primary" style="margin-top: var(--spacing-lg); width: 100%; justify-content: center; background: var(--color-primary);">Pagar Fatura</button>
-      </div>
+    ${cards.length > 0 ? `
+    <h3 style="margin-top: var(--spacing-lg);">Resumo das Faturas</h3>
+    <section class="stat-grid" style="margin-top: var(--spacing-md);">
+      ${cards.map(card => `
+        <div class="card">
+          <div class="flex justify-between items-start" style="margin-bottom: var(--spacing-md);">
+            <h4 style="font-size: 16px;">Fatura - ${card.name}</h4>
+            <span class="badge ${card.invoice > card.limit * 0.8 ? 'badge-danger' : 'badge-info'}">
+              ${card.invoice > card.limit * 0.8 ? 'Atenção' : 'OK'}
+            </span>
+          </div>
+          <div class="stat-value text-error" style="font-size: 1.5rem;">${formatCurrency(card.invoice)}</div>
+          <p class="text-muted" style="margin-top: 8px; font-size: 14px;">
+            Vence em ${new Date(card.dueDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}
+          </p>
+          <div class="progress-bar-track" style="margin-top: var(--spacing-md);">
+            <div class="progress-bar-fill" style="width: ${Math.round((card.invoice / card.limit) * 100)}%; background: ${card.invoice > card.limit * 0.8 ? 'var(--color-error)' : 'var(--color-accent)'};">
+            </div>
+          </div>
+          <p class="text-muted" style="margin-top: var(--spacing-sm); font-size: 12px;">
+            ${formatCurrency(card.invoice)} de ${formatCurrency(card.limit)} usados
+          </p>
+          <div class="flex gap-sm" style="margin-top: var(--spacing-lg);">
+            <button class="btn-primary btn-sm btn-pay-invoice" data-id="${card.id}" style="flex: 1; justify-content: center;">
+              Pagar Fatura
+            </button>
+            <button class="btn-outline btn-sm btn-add-expense" data-id="${card.id}" style="flex: 1; justify-content: center;">
+              + Gasto
+            </button>
+          </div>
+        </div>
+      `).join('')}
     </section>
+    ` : ''}
   `;
 }
 
+function renderCardItem(card) {
+  const usedPercent = Math.round((card.invoice / card.limit) * 100);
+  return `
+    <div class="credit-card-visual" style="background: ${card.color};" data-id="${card.id}">
+      <div class="cc-top">
+        <div>
+          <p class="cc-label">Saldo Disponível</p>
+          <h3 class="cc-balance">${formatCurrency(card.limit - card.invoice)}</h3>
+        </div>
+        <div class="cc-brand">${card.brand}</div>
+      </div>
+      <div class="cc-chip">
+        <span class="material-symbols-rounded" style="font-size: 36px; opacity: 0.8;">contactless</span>
+      </div>
+      <div class="cc-bottom">
+        <div>
+          <p class="cc-number">**** **** **** ${card.lastDigits}</p>
+          <p class="cc-holder">${card.holder}</p>
+        </div>
+        <div class="cc-expiry">
+          <p class="cc-label">VALIDADE</p>
+          <p style="font-weight: 600;">${card.expiry}</p>
+        </div>
+      </div>
+      <div class="cc-invoice-overlay">
+        <span>Fatura: ${formatCurrency(card.invoice)}</span>
+      </div>
+      <div class="cc-actions">
+        <button class="btn-icon-light btn-edit-card" data-id="${card.id}" title="Editar">
+          <span class="material-symbols-rounded">edit</span>
+        </button>
+        <button class="btn-icon-light btn-delete-card" data-id="${card.id}" title="Excluir">
+          <span class="material-symbols-rounded">delete</span>
+        </button>
+      </div>
+      <div class="cc-circle-1"></div>
+      <div class="cc-circle-2"></div>
+    </div>
+  `;
+}
+
+function openCardModal(existingCard = null) {
+  const isEdit = !!existingCard;
+  const card = existingCard || {};
+  const colorOptions = CARD_COLORS.map((c, i) =>
+    `<label class="color-swatch ${card.color === c ? 'active' : ''}" style="background: ${c};">
+      <input type="radio" name="color" value="${c}" ${(card.color === c || (!isEdit && i === 0)) ? 'checked' : ''} />
+    </label>`
+  ).join('');
+
+  openModal(isEdit ? 'Editar Cartão' : 'Novo Cartão', `
+    <form id="form-card" class="modal-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="card-name">Nome do Cartão</label>
+          <input type="text" id="card-name" name="name" value="${card.name || ''}" placeholder="Ex: Nubank Gold" required />
+        </div>
+        <div class="form-group">
+          <label for="card-brand">Bandeira</label>
+          <select id="card-brand" name="brand">
+            <option value="Mastercard" ${card.brand === 'Mastercard' ? 'selected' : ''}>Mastercard</option>
+            <option value="Visa" ${card.brand === 'Visa' ? 'selected' : ''}>Visa</option>
+            <option value="Elo" ${card.brand === 'Elo' ? 'selected' : ''}>Elo</option>
+            <option value="Amex" ${card.brand === 'Amex' ? 'selected' : ''}>American Express</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="card-holder">Titular</label>
+          <input type="text" id="card-holder" name="holder" value="${card.holder || ''}" placeholder="NOME COMPLETO" required style="text-transform: uppercase;" />
+        </div>
+        <div class="form-group">
+          <label for="card-digits">Últimos 4 Dígitos</label>
+          <input type="text" id="card-digits" name="lastDigits" value="${card.lastDigits || ''}" maxlength="4" pattern="[0-9]{4}" placeholder="1234" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="card-expiry">Validade (MM/AA)</label>
+          <input type="text" id="card-expiry" name="expiry" value="${card.expiry || ''}" placeholder="12/28" maxlength="5" required />
+        </div>
+        <div class="form-group">
+          <label for="card-limit">Limite (R$)</label>
+          <input type="number" id="card-limit" name="limit" value="${card.limit || ''}" step="100" min="100" placeholder="10000" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="card-invoice">Fatura Atual (R$)</label>
+          <input type="number" id="card-invoice" name="invoice" value="${card.invoice || 0}" step="0.01" min="0" required />
+        </div>
+        <div class="form-group">
+          <label for="card-due">Vencimento</label>
+          <input type="date" id="card-due" name="dueDate" value="${card.dueDate || ''}" required />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Cor do Cartão</label>
+        <div class="color-swatches">${colorOptions}</div>
+      </div>
+      <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
+        <span class="material-symbols-rounded">${isEdit ? 'save' : 'add'}</span>
+        ${isEdit ? 'Salvar Alterações' : 'Adicionar Cartão'}
+      </button>
+    </form>
+  `, (data) => {
+    const cardData = {
+      name: data.name,
+      holder: data.holder.toUpperCase(),
+      lastDigits: data.lastDigits,
+      brand: data.brand,
+      expiry: data.expiry,
+      limit: parseFloat(data.limit),
+      invoice: parseFloat(data.invoice),
+      dueDate: data.dueDate,
+      color: data.color,
+    };
+
+    if (isEdit) {
+      updateCard(existingCard.id, cardData);
+    } else {
+      addCard(cardData);
+    }
+    window.location.hash = 'cartoes';
+  });
+
+  // Color swatch selection
+  document.querySelectorAll('.color-swatch').forEach(swatch => {
+    swatch.addEventListener('click', () => {
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+      swatch.classList.add('active');
+    });
+  });
+}
+
 export function initCartoes() {
-  console.log('Cartões view initialized');
+  // New card
+  document.getElementById('btn-new-card')?.addEventListener('click', () => openCardModal());
+  document.getElementById('btn-new-card-empty')?.addEventListener('click', () => openCardModal());
+
+  // Edit card
+  document.querySelectorAll('.btn-edit-card').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const card = getCards().find(c => c.id === btn.dataset.id);
+      if (card) openCardModal(card);
+    });
+  });
+
+  // Delete card
+  document.querySelectorAll('.btn-delete-card').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const ok = await confirmDialog('Excluir Cartão', 'Tem certeza que deseja excluir este cartão? Esta ação não pode ser desfeita.');
+      if (ok) {
+        deleteCard(btn.dataset.id);
+        window.location.hash = 'cartoes';
+      }
+    });
+  });
+
+  // Pay invoice
+  document.querySelectorAll('.btn-pay-invoice').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = getCards().find(c => c.id === btn.dataset.id);
+      if (!card) return;
+
+      openModal('Pagar Fatura', `
+        <form id="form-pay" class="modal-form">
+          <p style="margin-bottom: var(--spacing-lg);">Fatura atual do <strong>${card.name}</strong>: <strong class="text-error">${formatCurrency(card.invoice)}</strong></p>
+          <div class="form-group">
+            <label for="pay-amount">Valor do Pagamento (R$)</label>
+            <input type="number" id="pay-amount" name="amount" step="0.01" min="0.01" max="${card.invoice}" value="${card.invoice}" required />
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
+            <span class="material-symbols-rounded">payments</span>
+            Confirmar Pagamento
+          </button>
+        </form>
+      `, (data) => {
+        const amount = parseFloat(data.amount);
+        updateCard(card.id, { invoice: Math.max(card.invoice - amount, 0) });
+        addTransaction({
+          description: `Pagamento fatura - ${card.name}`,
+          category: 'Outros',
+          type: 'expense',
+          amount: amount,
+          date: new Date().toISOString().split('T')[0],
+          icon: 'credit_card',
+        });
+        window.location.hash = 'cartoes';
+      });
+    });
+  });
+
+  // Add expense to card
+  document.querySelectorAll('.btn-add-expense').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = getCards().find(c => c.id === btn.dataset.id);
+      if (!card) return;
+
+      openModal('Registrar Gasto no Cartão', `
+        <form id="form-card-expense" class="modal-form">
+          <p style="margin-bottom: var(--spacing-lg);">Cartão: <strong>${card.name}</strong> — Limite disponível: <strong>${formatCurrency(card.limit - card.invoice)}</strong></p>
+          <div class="form-group">
+            <label for="exp-desc">Descrição</label>
+            <input type="text" id="exp-desc" name="description" placeholder="Ex: Restaurante, Compras..." required />
+          </div>
+          <div class="form-group">
+            <label for="exp-amount">Valor (R$)</label>
+            <input type="number" id="exp-amount" name="amount" step="0.01" min="0.01" placeholder="0,00" required />
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
+            <span class="material-symbols-rounded">add_shopping_cart</span>
+            Registrar Gasto
+          </button>
+        </form>
+      `, (data) => {
+        const amount = parseFloat(data.amount);
+        updateCard(card.id, { invoice: card.invoice + amount });
+        addTransaction({
+          description: data.description,
+          category: 'Outros',
+          type: 'expense',
+          amount: amount,
+          date: new Date().toISOString().split('T')[0],
+          icon: 'credit_card',
+        });
+        window.location.hash = 'cartoes';
+      });
+    });
+  });
 }

@@ -1,51 +1,73 @@
+import {
+  getTransactions, addTransaction, deleteTransaction,
+  getMonthlyIncome, getMonthlyExpenses, getBalance,
+  getWeeklyExpenses, getSettings,
+  formatCurrency, formatDate, CATEGORIES, CATEGORY_ICONS
+} from '../store.js';
+import { openModal, confirmDialog } from '../modal.js';
+
+let chartInstance = null;
+
 export function renderDashboard() {
+  const income = getMonthlyIncome();
+  const expenses = getMonthlyExpenses();
+  const balance = getBalance();
+  const settings = getSettings();
+  const txs = getTransactions().slice(0, 8);
+  const limitPercent = Math.min(Math.round((expenses / settings.monthlyLimit) * 100), 100);
+  const remaining = Math.max(settings.monthlyLimit - expenses, 0);
+
+  const incomeChange = income > 0 ? '+' + Math.round((income / 8000) * 100 - 100) + '%' : '0%';
+  const balanceSign = balance >= 0 ? 'text-success' : 'text-error';
+
+  let limitColor = 'var(--color-accent)';
+  if (limitPercent > 90) limitColor = 'var(--color-error)';
+  else if (limitPercent > 70) limitColor = '#e67e22';
+
   return `
     <header class="flex justify-between items-center">
       <div>
         <h2>Visão Geral</h2>
-        <p class="text-muted">Bem-vindo de volta, Diego. Acompanhe o resumo das suas finanças.</p>
+        <p class="text-muted">Bem-vindo de volta, ${settings.userName}. Acompanhe o resumo das suas finanças.</p>
       </div>
       <div class="flex items-center gap-md">
-        <button class="btn-primary flex items-center gap-sm">
+        <button class="btn-primary flex items-center gap-sm" id="btn-new-transaction">
           <span class="material-symbols-rounded">add</span>
           Nova Transação
         </button>
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--color-surface-container-highest); display: flex; align-items: center; justify-content: center;">
-          <span class="material-symbols-rounded">person</span>
-        </div>
       </div>
     </header>
 
     <section class="stat-grid">
       <div class="card stat-card">
-        <span class="text-muted">Saldo Total</span>
-        <div class="stat-value">R$ 24.500,00</div>
-        <div class="text-success flex items-center gap-xs" style="font-size: 14px;">
-          <span class="material-symbols-rounded" style="font-size: 18px;">arrow_upward</span>
-          +12% este mês
+        <span class="text-muted">Saldo do Mês</span>
+        <div class="stat-value ${balanceSign}">${formatCurrency(balance)}</div>
+        <div class="${balanceSign} flex items-center gap-xs" style="font-size: 14px;">
+          <span class="material-symbols-rounded" style="font-size: 18px;">${balance >= 0 ? 'trending_up' : 'trending_down'}</span>
+          ${balance >= 0 ? 'Positivo este mês' : 'Negativo este mês'}
         </div>
       </div>
       <div class="card stat-card">
         <span class="text-muted">Receitas Mensais</span>
-        <div class="stat-value">R$ 8.250,00</div>
+        <div class="stat-value">${formatCurrency(income)}</div>
         <div class="text-success flex items-center gap-xs" style="font-size: 14px;">
           <span class="material-symbols-rounded" style="font-size: 18px;">payments</span>
-          4 depósitos novos
+          ${getTransactions().filter(t => t.type === 'income').length} entradas
         </div>
       </div>
       <div class="card stat-card">
         <span class="text-muted">Despesas Mensais</span>
-        <div class="stat-value text-error">R$ 3.840,00</div>
+        <div class="stat-value text-error">${formatCurrency(expenses)}</div>
         <div class="text-error flex items-center gap-xs" style="font-size: 14px;">
           <span class="material-symbols-rounded" style="font-size: 18px;">arrow_downward</span>
-          -5% vs mês passado
+          ${getTransactions().filter(t => t.type === 'expense').length} saídas
         </div>
       </div>
     </section>
 
-    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--spacing-lg);">
+    <div class="dashboard-grid-2">
       <div class="card">
-        <h3 style="margin-bottom: var(--spacing-lg);">Gastos por Semana</h3>
+        <h3 style="margin-bottom: var(--spacing-lg);">Gastos da Semana</h3>
         <div style="height: 300px; width: 100%;">
           <canvas id="weeklyChart"></canvas>
         </div>
@@ -53,18 +75,24 @@ export function renderDashboard() {
 
       <div class="card flex flex-col gap-lg">
         <h3>Limite de Gastos</h3>
-        <p class="text-muted">Mantenha-se dentro do limite para atingir suas metas financeiras.</p>
+        <p class="text-muted">Meta mensal: ${formatCurrency(settings.monthlyLimit)}</p>
         <div style="margin-top: auto;">
           <div class="flex justify-between" style="margin-bottom: var(--spacing-sm);">
             <span style="font-weight: 600;">Progresso do Limite</span>
-            <span class="text-muted">75%</span>
+            <span class="text-muted" style="font-weight: 600;">${limitPercent}%</span>
           </div>
-          <div style="height: 12px; background: var(--color-surface-container); border-radius: var(--radius-full); overflow: hidden;">
-            <div style="width: 75%; height: 100%; background: var(--color-accent); border-radius: var(--radius-full);"></div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" style="width: ${limitPercent}%; background: ${limitColor};"></div>
           </div>
           <p style="margin-top: var(--spacing-md); font-size: 14px;">
-            Faltam <span style="font-weight: 700;">R$ 1.250</span> para atingir o limite.
+            ${remaining > 0 
+              ? `Ainda disponível: <span style="font-weight: 700;">${formatCurrency(remaining)}</span>` 
+              : '<span style="font-weight: 700; color: var(--color-error);">Limite atingido!</span>'}
           </p>
+          <button class="btn-outline" id="btn-edit-limit" style="margin-top: var(--spacing-md); width: 100%;">
+            <span class="material-symbols-rounded">edit</span>
+            Alterar Limite
+          </button>
         </div>
       </div>
     </div>
@@ -72,66 +100,177 @@ export function renderDashboard() {
     <section class="card">
       <div class="flex justify-between items-center" style="margin-bottom: var(--spacing-lg);">
         <h3>Transações Recentes</h3>
-        <a href="#" class="text-muted" style="text-decoration: none; font-weight: 600; font-size: 14px;">Ver todas</a>
+        <span class="text-muted" style="font-size: 14px; font-weight: 600;">${getTransactions().length} registros</span>
       </div>
       <div class="transactions-list">
-        <div class="transaction-item">
-          <div class="flex items-center gap-md">
-            <div style="width: 40px; height: 40px; background: #ffebee; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: #d32f2f;">
-              <span class="material-symbols-rounded">shopping_cart</span>
+        ${txs.length === 0 ? '<p class="text-muted" style="text-align:center; padding: var(--spacing-xl);">Nenhuma transação registrada.</p>' : ''}
+        ${txs.map(tx => `
+          <div class="transaction-item" data-id="${tx.id}">
+            <div class="flex items-center gap-md">
+              <div class="tx-icon ${tx.type === 'income' ? 'tx-icon-income' : 'tx-icon-expense'}">
+                <span class="material-symbols-rounded">${tx.icon || CATEGORY_ICONS[tx.category] || 'receipt'}</span>
+              </div>
+              <div>
+                <div style="font-weight: 600;">${tx.description}</div>
+                <div class="text-muted" style="font-size: 12px;">${tx.category} • ${formatDate(tx.date)}</div>
+              </div>
             </div>
-            <div>
-              <div style="font-weight: 600;">Supermercado Pão de Açúcar</div>
-              <div class="text-muted" style="font-size: 12px;">Alimentação • Hoje, 14:30</div>
-            </div>
-          </div>
-          <div class="text-error" style="font-weight: 700;">- R$ 450,00</div>
-        </div>
-        
-        <div class="transaction-item">
-          <div class="flex items-center gap-md">
-            <div style="width: 40px; height: 40px; background: #e8f5e9; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: #2e7d32;">
-              <span class="material-symbols-rounded">work</span>
-            </div>
-            <div>
-              <div style="font-weight: 600;">Salário Mensal - TechCorp</div>
-              <div class="text-muted" style="font-size: 12px;">Renda • Ontem, 09:00</div>
+            <div class="flex items-center gap-md">
+              <div class="${tx.type === 'income' ? 'text-success' : 'text-error'}" style="font-weight: 700; font-family: var(--font-data);">
+                ${tx.type === 'income' ? '+' : '-'} ${formatCurrency(tx.amount)}
+              </div>
+              <button class="btn-icon btn-delete-tx" data-id="${tx.id}" title="Excluir">
+                <span class="material-symbols-rounded" style="font-size: 18px;">delete</span>
+              </button>
             </div>
           </div>
-          <div class="text-success" style="font-weight: 700;">+ R$ 6.500,00</div>
-        </div>
+        `).join('')}
       </div>
     </section>
   `;
 }
 
 export function initDashboard() {
-  const ctx = document.getElementById('weeklyChart').getContext('2d');
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
-      datasets: [{
-        label: 'Gastos (R$)',
-        data: [150, 450, 200, 600, 350, 800, 400],
-        borderColor: '#4592EA',
-        backgroundColor: 'rgba(69, 146, 234, 0.1)',
-        tension: 0.4,
-        fill: true,
-        borderWidth: 3,
-        pointRadius: 4,
-        pointBackgroundColor: '#4592EA'
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }
+  // Weekly chart
+  const ctx = document.getElementById('weeklyChart')?.getContext('2d');
+  if (ctx) {
+    const weekly = getWeeklyExpenses();
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: weekly.labels,
+        datasets: [{
+          label: 'Gastos (R$)',
+          data: weekly.data,
+          backgroundColor: 'rgba(69, 146, 234, 0.6)',
+          borderColor: '#4592EA',
+          borderWidth: 2,
+          borderRadius: 8,
+          borderSkipped: false,
+        }]
       },
-      scales: {
-        y: { beginAtZero: true, ticks: { callback: v => 'R$ ' + v } }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { callback: v => 'R$ ' + v },
+            grid: { color: 'rgba(0,0,0,0.04)' },
+          },
+          x: {
+            grid: { display: false }
+          }
+        }
       }
-    }
+    });
+  }
+
+  // New transaction modal
+  document.getElementById('btn-new-transaction')?.addEventListener('click', () => {
+    const today = new Date().toISOString().split('T')[0];
+    const categoryOptions = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+
+    openModal('Nova Transação', `
+      <form id="form-transaction" class="modal-form">
+        <div class="form-group">
+          <label>Tipo</label>
+          <div class="toggle-group">
+            <label class="toggle-option active">
+              <input type="radio" name="type" value="expense" checked> Despesa
+            </label>
+            <label class="toggle-option">
+              <input type="radio" name="type" value="income"> Receita
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="tx-desc">Descrição</label>
+          <input type="text" id="tx-desc" name="description" placeholder="Ex: Supermercado, Salário..." required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tx-amount">Valor (R$)</label>
+            <input type="number" id="tx-amount" name="amount" step="0.01" min="0.01" placeholder="0,00" required />
+          </div>
+          <div class="form-group">
+            <label for="tx-date">Data</label>
+            <input type="date" id="tx-date" name="date" value="${today}" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="tx-category">Categoria</label>
+          <select id="tx-category" name="category">${categoryOptions}</select>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
+          <span class="material-symbols-rounded">add</span>
+          Adicionar Transação
+        </button>
+      </form>
+    `, (data) => {
+      addTransaction({
+        description: data.description,
+        category: data.category,
+        type: data.type,
+        amount: parseFloat(data.amount),
+        date: data.date,
+        icon: CATEGORY_ICONS[data.category] || 'receipt',
+      });
+      navigate('dashboard');
+    });
+
+    // Toggle group
+    document.querySelectorAll('.toggle-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        document.querySelectorAll('.toggle-option').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+      });
+    });
   });
+
+  // Edit limit
+  document.getElementById('btn-edit-limit')?.addEventListener('click', () => {
+    const settings = getSettings();
+    openModal('Alterar Limite Mensal', `
+      <form id="form-limit" class="modal-form">
+        <div class="form-group">
+          <label for="limit-value">Novo Limite (R$)</label>
+          <input type="number" id="limit-value" name="monthlyLimit" step="100" min="100" value="${settings.monthlyLimit}" required />
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
+          <span class="material-symbols-rounded">save</span>
+          Salvar
+        </button>
+      </form>
+    `, (data) => {
+      const { updateSettings } = require_store();
+      updateSettings({ monthlyLimit: parseFloat(data.monthlyLimit) });
+      navigate('dashboard');
+    });
+  });
+
+  // Delete transaction
+  document.querySelectorAll('.btn-delete-tx').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      const ok = await confirmDialog('Excluir Transação', 'Tem certeza que deseja excluir esta transação?');
+      if (ok) {
+        deleteTransaction(id);
+        navigate('dashboard');
+      }
+    });
+  });
+}
+
+// Helper to avoid circular import issues
+function require_store() {
+  return import('../store.js');
+}
+
+// Navigate is set by main
+function navigate(route) {
+  window.location.hash = route;
 }

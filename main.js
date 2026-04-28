@@ -5,12 +5,13 @@ import { renderDividas, initDividas } from './views/dividas.js'
 
 const mainContent = document.getElementById('main-content');
 const navLinks = document.querySelectorAll('.nav-link');
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
 
 const routes = {
   dashboard: { render: renderDashboard, init: initDashboard },
   cartoes: { render: renderCartoes, init: initCartoes },
   dividas: { render: renderDividas, init: initDividas },
-  // Fallback for views not yet implemented
   default: { 
     render: (title) => `<h2>${title}</h2><p class="text-muted">Em breve...</p>`, 
     init: () => {} 
@@ -18,7 +19,7 @@ const routes = {
 };
 
 function navigate(routeId) {
-  // Update UI
+  // Update sidebar active state
   navLinks.forEach(link => {
     if (link.dataset.view === routeId) {
       link.classList.add('active');
@@ -27,18 +28,26 @@ function navigate(routeId) {
     }
   });
 
-  // Render Content
+  // Render content
   const route = routes[routeId] || routes.default;
   mainContent.innerHTML = typeof route.render === 'function' ? route.render() : route.render(routeId);
   
-  // Initialize Logic (like charts)
+  // Initialize view logic (charts, events, etc.)
   if (route.init) route.init();
 
-  // Update URL Hash
-  window.location.hash = routeId;
+  // Close mobile sidebar
+  sidebar?.classList.remove('open');
+
+  // Scroll to top
+  mainContent.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Update URL hash without triggering hashchange
+  if (window.location.hash !== '#' + routeId) {
+    history.replaceState(null, '', '#' + routeId);
+  }
 }
 
-// Handle navigation clicks
+// Navigation click handlers
 navLinks.forEach(link => {
   link.addEventListener('click', (e) => {
     e.preventDefault();
@@ -47,15 +56,30 @@ navLinks.forEach(link => {
   });
 });
 
-// Handle initial load and back/forward
+// Mobile sidebar toggle
+sidebarToggle?.addEventListener('click', () => {
+  sidebar?.classList.toggle('open');
+});
+
+// Close sidebar when clicking outside on mobile
+document.addEventListener('click', (e) => {
+  if (window.innerWidth <= 900 && sidebar?.classList.contains('open')) {
+    if (!sidebar.contains(e.target) && e.target !== sidebarToggle && !sidebarToggle?.contains(e.target)) {
+      sidebar.classList.remove('open');
+    }
+  }
+});
+
+// Initial load
 window.addEventListener('load', () => {
   const hash = window.location.hash.replace('#', '') || 'dashboard';
   navigate(hash);
 });
 
+// Hash change (browser back/forward)
 window.addEventListener('hashchange', () => {
   const hash = window.location.hash.replace('#', '') || 'dashboard';
   navigate(hash);
 });
 
-console.log('Router FinançasPro inicializado!');
+console.log('🚀 FinançasPro inicializado!');
