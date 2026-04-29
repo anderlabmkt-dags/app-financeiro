@@ -3,7 +3,9 @@ import {
   getMonthlyIncome, getMonthlyExpenses, getBalance,
   getWeeklyExpenses, getSettings, updateSettings,
   formatCurrency, formatDate, CATEGORIES, CATEGORY_ICONS,
-  CATEGORY_STRUCTURE, autoCategorize, getIconForCategory
+  CATEGORY_STRUCTURE, autoCategorize, getIconForCategory,
+  getCards, updateCard,
+  getBankAccounts, updateBankAccount
 } from '../store.js';
 import { openModal, confirmDialog } from '../modal.js';
 
@@ -167,7 +169,11 @@ export function renderDashboard() {
       </div>
       <div class="transactions-list">
         ${txs.length === 0 ? '<p class="text-muted" style="text-align:center; padding: var(--spacing-xl);">Nenhuma transação registrada.</p>' : ''}
-        ${txs.map(tx => `
+        ${txs.map(tx => {
+          const paymentLabel = tx.paymentMethod === 'credit_card' ? `💳 ${tx.paymentSourceName || 'Cartão'}` 
+            : tx.paymentMethod === 'debit' ? `🏦 ${tx.paymentSourceName || 'Conta'}` 
+            : tx.paymentMethod === 'cash' ? '💵 Dinheiro' : '';
+          return `
           <div class="transaction-item" data-id="${tx.id}">
             <div class="flex items-center gap-md">
               <div class="tx-icon ${tx.type === 'income' ? 'tx-icon-income' : 'tx-icon-expense'}">
@@ -175,7 +181,7 @@ export function renderDashboard() {
               </div>
               <div>
                 <div style="font-weight: 600;">${tx.description}</div>
-                <div class="text-muted" style="font-size: 12px;">${tx.category} • ${formatDate(tx.date)}</div>
+                <div class="text-muted" style="font-size: 12px;">${tx.category} • ${formatDate(tx.date)}${paymentLabel ? ' • ' + paymentLabel : ''}</div>
               </div>
             </div>
             <div class="flex items-center gap-md">
@@ -187,7 +193,7 @@ export function renderDashboard() {
               </button>
             </div>
           </div>
-        `).join('')}
+        `}).join('')}
       </div>
     </section>
   `;
@@ -330,6 +336,8 @@ export function initDashboard() {
   // New transaction modal
   document.getElementById('btn-new-transaction')?.addEventListener('click', () => {
     const today = new Date().toISOString().split('T')[0];
+    const cards = getCards();
+    const bankAccounts = getBankAccounts();
     
     const getCategoryOptions = (type) => {
       const cats = CATEGORY_STRUCTURE[type] || [];
@@ -339,6 +347,9 @@ export function initDashboard() {
         </optgroup>
       `).join('');
     };
+
+    const cardOptions = cards.map(c => `<option value="${c.id}">${c.name} (•••• ${c.lastDigits}) — Disp: ${formatCurrency(c.limit - c.invoice)}</option>`).join('');
+    const bankOptions = bankAccounts.map(a => `<option value="${a.id}">${a.bankName} - ${a.accountType} — Saldo: ${formatCurrency(a.balance)}</option>`).join('');
 
     openModal('Nova Transação', `
       <form id="form-transaction" class="modal-form">
@@ -371,25 +382,102 @@ export function initDashboard() {
           <label for="tx-category">Categoria</label>
           <select id="tx-category" name="category">${getCategoryOptions('expense')}</select>
         </div>
+        <div class="form-group" id="payment-method-section">
+          <label>Forma de Pagamento</label>
+          <div class="toggle-group" id="tx-payment-group">
+            <label class="toggle-option active">
+              <input type="radio" name="paymentMethod" value="credit_card" checked>
+              <span class="material-symbols-rounded" style="font-size: 18px;">credit_card</span> Cartão
+            </label>
+            <label class="toggle-option">
+              <input type="radio" name="paymentMethod" value="debit">
+              <span class="material-symbols-rounded" style="font-size: 18px;">account_balance</span> Débito
+            </label>
+            <label class="toggle-option">
+              <input type="radio" name="paymentMethod" value="cash">
+              <span class="material-symbols-rounded" style="font-size: 18px;">payments</span> Dinheiro
+            </label>
+          </div>
+        </div>
+        <div class="form-group" id="payment-source-section">
+          <label for="tx-payment-source" id="payment-source-label">Selecione o Cartão</label>
+          <select id="tx-payment-source" name="paymentSource">
+            ${cardOptions || '<option value="">Nenhum cartão cadastrado</option>'}
+          </select>
+        </div>
         <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
           <span class="material-symbols-rounded">add</span>
           Adicionar Transação
         </button>
       </form>
     `, (data) => {
+      const amount = parseFloat(data.amount);
+      const paymentMethod = data.paymentMethod;
+      const paymentSourceId = data.paymentSource;
+      let paymentSourceName = '';
+
+      // Atualizar cartão ou conta bancária
+      if (data.type === 'expense' && paymentMethod === 'credit_card' && paymentSourceId) {
+        const card = cards.find(c => c.id === paymentSourceId);
+        if (card) {
+          updateCard(card.id, { invoice: card.invoice + amount });
+          paymentSourceName = card.name;
+        }
+      } else if (data.type === 'expense' && paymentMethod === 'debit' && paymentSourceId) {
+        const account = bankAccounts.find(a => a.id === paymentSourceId);
+        if (account) {
+          updateBankAccount(account.id, { balance: account.balance - amount });
+          paymentSourceName = `${account.bankName}`;
+        }
+      }
+
       addTransaction({
         description: data.description,
         category: data.category,
         type: data.type,
-        amount: parseFloat(data.amount),
+        amount: amount,
         date: data.date,
         icon: getIconForCategory(data.category),
+        paymentMethod: data.type === 'expense' ? paymentMethod : undefined,
+        paymentSourceId: data.type === 'expense' ? paymentSourceId : undefined,
+        paymentSourceName: data.type === 'expense' ? paymentSourceName : undefined,
       });
       navigate('dashboard');
     });
 
     const descInput = document.getElementById('tx-desc');
     const catSelect = document.getElementById('tx-category');
+    const paymentMethodSection = document.getElementById('payment-method-section');
+    const paymentSourceSection = document.getElementById('payment-source-section');
+    const paymentSourceSelect = document.getElementById('tx-payment-source');
+    const paymentSourceLabel = document.getElementById('payment-source-label');
+
+    // Função para atualizar visibilidade da seção de pagamento
+    const updatePaymentUI = (txType) => {
+      if (txType === 'income') {
+        paymentMethodSection.style.display = 'none';
+        paymentSourceSection.style.display = 'none';
+      } else {
+        paymentMethodSection.style.display = '';
+        const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+        updatePaymentSourceUI(selectedMethod);
+      }
+    };
+
+    // Função para atualizar o dropdown de fontes de pagamento
+    const updatePaymentSourceUI = (method) => {
+      if (method === 'credit_card') {
+        paymentSourceSection.style.display = '';
+        paymentSourceLabel.textContent = 'Selecione o Cartão';
+        paymentSourceSelect.innerHTML = cardOptions || '<option value="">Nenhum cartão cadastrado</option>';
+      } else if (method === 'debit') {
+        paymentSourceSection.style.display = '';
+        paymentSourceLabel.textContent = 'Selecione a Conta Bancária';
+        paymentSourceSelect.innerHTML = bankOptions || '<option value="">Nenhuma conta cadastrada</option>';
+      } else {
+        paymentSourceSection.style.display = 'none';
+      }
+    };
 
     descInput?.addEventListener('blur', () => {
       const type = document.querySelector('input[name="type"]:checked')?.value || 'expense';
@@ -399,19 +487,33 @@ export function initDashboard() {
       }
     });
 
-    // Toggle group
-    document.querySelectorAll('.toggle-option').forEach(opt => {
+    // Toggle tipo (Despesa/Receita)
+    document.querySelectorAll('#tx-type-group .toggle-option').forEach(opt => {
       opt.addEventListener('click', () => {
-        document.querySelectorAll('.toggle-option').forEach(o => o.classList.remove('active'));
+        document.querySelectorAll('#tx-type-group .toggle-option').forEach(o => o.classList.remove('active'));
         opt.classList.add('active');
         const radio = opt.querySelector('input');
         if (radio) {
           radio.checked = true;
           catSelect.innerHTML = getCategoryOptions(radio.value);
+          updatePaymentUI(radio.value);
           if (descInput?.value) {
             const suggestion = autoCategorize(descInput.value, radio.value);
             if (suggestion) catSelect.value = suggestion.category;
           }
+        }
+      });
+    });
+
+    // Toggle forma de pagamento
+    document.querySelectorAll('#tx-payment-group .toggle-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        document.querySelectorAll('#tx-payment-group .toggle-option').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+        const radio = opt.querySelector('input');
+        if (radio) {
+          radio.checked = true;
+          updatePaymentSourceUI(radio.value);
         }
       });
     });

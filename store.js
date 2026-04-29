@@ -169,7 +169,27 @@ export function addTransaction(tx) {
 }
 
 export function deleteTransaction(id) {
-  const txs = getTransactions().filter(t => t.id !== id);
+  const allTxs = getTransactions();
+  const tx = allTxs.find(t => t.id === id);
+
+  // Reverter impacto no cartão ou conta bancária
+  if (tx && tx.type === 'expense' && tx.paymentSourceId) {
+    if (tx.paymentMethod === 'credit_card') {
+      const cards = getCards();
+      const card = cards.find(c => c.id === tx.paymentSourceId);
+      if (card) {
+        updateCard(card.id, { invoice: Math.max(card.invoice - tx.amount, 0) });
+      }
+    } else if (tx.paymentMethod === 'debit') {
+      const accounts = getBankAccounts();
+      const account = accounts.find(a => a.id === tx.paymentSourceId);
+      if (account) {
+        updateBankAccount(account.id, { balance: account.balance + tx.amount });
+      }
+    }
+  }
+
+  const txs = allTxs.filter(t => t.id !== id);
   save(STORAGE_KEYS.transactions, txs);
 }
 
