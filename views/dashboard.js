@@ -1,7 +1,7 @@
 import {
   getTransactions, addTransaction, deleteTransaction,
   getMonthlyIncome, getMonthlyExpenses, getBalance,
-  getWeeklyExpenses, getSettings,
+  getWeeklyExpenses, getSettings, updateSettings,
   formatCurrency, formatDate, CATEGORIES, CATEGORY_ICONS
 } from '../store.js';
 import { openModal, confirmDialog } from '../modal.js';
@@ -286,7 +286,6 @@ export function initDashboard() {
         </button>
       </form>
     `, (data) => {
-      const { updateSettings } = require_store();
       updateSettings({ monthlyLimit: parseFloat(data.monthlyLimit) });
       navigate('dashboard');
     });
@@ -304,11 +303,6 @@ export function initDashboard() {
       }
     });
   });
-}
-
-// Helper to avoid circular import issues
-function require_store() {
-  return import('../store.js');
 }
 
 // Navigate is set by main
