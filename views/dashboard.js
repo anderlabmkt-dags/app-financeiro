@@ -7,6 +7,8 @@ import {
 import { openModal, confirmDialog } from '../modal.js';
 
 let chartInstance = null;
+let expensePieChartInstance = null;
+let incomePieChartInstance = null;
 let selectedPeriod = new Date().getMonth().toString();
 let selectedYear = new Date().getFullYear();
 
@@ -28,6 +30,14 @@ export function renderDashboard() {
       return d.getFullYear() === selectedYear;
     });
   }
+
+  const expenseByCategory = {};
+  const incomeByCategory = {};
+  allTxs.forEach(tx => {
+    if (tx.type === 'expense') expenseByCategory[tx.category] = (expenseByCategory[tx.category] || 0) + tx.amount;
+    if (tx.type === 'income') incomeByCategory[tx.category] = (incomeByCategory[tx.category] || 0) + tx.amount;
+  });
+
   const txs = allTxs.slice(0, 8);
   
   const isAnnual = selectedPeriod === 'all';
@@ -127,6 +137,25 @@ export function renderDashboard() {
       </div>
     </div>
 
+    <div class="dashboard-grid-2" style="margin-bottom: var(--spacing-lg);">
+      <div class="card">
+        <h3 style="margin-bottom: var(--spacing-lg);">Despesas por Categoria</h3>
+        <div style="height: 250px; width: 100%; position: relative;">
+          ${Object.keys(expenseByCategory).length > 0 
+            ? '<canvas id="expensePieChart"></canvas>' 
+            : '<p class="text-muted" style="text-align:center; padding-top: 100px;">Nenhuma despesa no período.</p>'}
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom: var(--spacing-lg);">Receitas por Categoria</h3>
+        <div style="height: 250px; width: 100%; position: relative;">
+          ${Object.keys(incomeByCategory).length > 0 
+            ? '<canvas id="incomePieChart"></canvas>' 
+            : '<p class="text-muted" style="text-align:center; padding-top: 100px;">Nenhuma receita no período.</p>'}
+        </div>
+      </div>
+    </div>
+
     <section class="card">
       <div class="flex justify-between items-center" style="margin-bottom: var(--spacing-lg);">
         <h3>Transações do Período</h3>
@@ -192,6 +221,91 @@ export function initDashboard() {
           },
           x: {
             grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  const allTxs = getTransactions().filter(t => {
+      const d = new Date(t.date + 'T12:00:00');
+      if (selectedPeriod !== 'all') {
+        return d.getMonth() === parseInt(selectedPeriod) && d.getFullYear() === selectedYear;
+      }
+      return d.getFullYear() === selectedYear;
+  });
+
+  const expenseByCategory = {};
+  const incomeByCategory = {};
+  allTxs.forEach(tx => {
+    if (tx.type === 'expense') expenseByCategory[tx.category] = (expenseByCategory[tx.category] || 0) + tx.amount;
+    if (tx.type === 'income') incomeByCategory[tx.category] = (incomeByCategory[tx.category] || 0) + tx.amount;
+  });
+
+  const expenseCtx = document.getElementById('expensePieChart')?.getContext('2d');
+  if (expenseCtx) {
+    if (expensePieChartInstance) expensePieChartInstance.destroy();
+    expensePieChartInstance = new Chart(expenseCtx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(expenseByCategory),
+        datasets: [{
+          data: Object.values(expenseByCategory),
+          backgroundColor: ['#ff6b6b', '#feca57', '#ff9ff3', '#54a0ff', '#5f27cd', '#ff9f43', '#ee5253', '#0abde3'],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { color: '#a0a0a0', font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                let label = context.label || '';
+                if (label) label += ': ';
+                if (context.parsed !== null) {
+                  label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed);
+                }
+                return label;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  const incomeCtx = document.getElementById('incomePieChart')?.getContext('2d');
+  if (incomeCtx) {
+    if (incomePieChartInstance) incomePieChartInstance.destroy();
+    incomePieChartInstance = new Chart(incomeCtx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(incomeByCategory),
+        datasets: [{
+          data: Object.values(incomeByCategory),
+          backgroundColor: ['#1dd1a1', '#10ac84', '#00d2d3', '#01a3a4', '#48dbfb', '#0abde3', '#f368e0', '#ff9ff3'],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { color: '#a0a0a0', font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                let label = context.label || '';
+                if (label) label += ': ';
+                if (context.parsed !== null) {
+                  label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed);
+                }
+                return label;
+              }
+            }
           }
         }
       }
