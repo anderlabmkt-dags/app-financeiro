@@ -136,6 +136,7 @@ function defaultSettings() {
   return {
     monthlyLimit: 5000,
     userName: 'Diego',
+    walletBalance: 0,
   };
 }
 
@@ -186,6 +187,9 @@ export function deleteTransaction(id) {
       if (account) {
         updateBankAccount(account.id, { balance: account.balance + tx.amount });
       }
+    } else if (tx.paymentMethod === 'cash') {
+      const settings = getSettings();
+      updateSettings({ walletBalance: (settings.walletBalance || 0) + tx.amount });
     }
   }
 
@@ -240,7 +244,9 @@ export function deleteBankAccount(id) {
 }
 
 export function getTotalBankBalance() {
-  return getBankAccounts().reduce((sum, a) => sum + a.balance, 0);
+  const bankSum = getBankAccounts().reduce((sum, a) => sum + a.balance, 0);
+  const walletSum = getSettings().walletBalance || 0;
+  return bankSum + walletSum;
 }
 
 // ---------- Debts ----------

@@ -1,6 +1,6 @@
 import {
   getBankAccounts, addBankAccount, updateBankAccount, deleteBankAccount,
-  getTotalBankBalance, addTransaction, formatCurrency, BANK_COLORS
+  getTotalBankBalance, addTransaction, formatCurrency, BANK_COLORS, getSettings, updateSettings
 } from '../store.js';
 import { openModal, confirmDialog } from '../modal.js';
 
@@ -8,11 +8,14 @@ export function renderContas() {
   const accounts = getBankAccounts();
   const totalBalance = getTotalBankBalance();
 
+  const settings = getSettings();
+  const walletBalance = settings.walletBalance || 0;
+
   return `
-    <header class="flex justify-between items-center">
+    <header class="flex justify-between items-center" style="margin-bottom: var(--spacing-lg);">
       <div>
         <h2>Contas Bancárias</h2>
-        <p class="text-muted">Gerencie suas contas, saldos e movimentações.</p>
+        <p class="text-muted">Gerencie suas contas, saldos e dinheiro físico.</p>
       </div>
       <button class="btn-primary flex items-center gap-sm" id="btn-new-account">
         <span class="material-symbols-rounded">add</span>
@@ -20,19 +23,41 @@ export function renderContas() {
       </button>
     </header>
 
-    <!-- Total Balance Banner -->
-    <div class="bank-total-banner">
-      <div class="bank-total-inner">
-        <div class="bank-total-icon">
-          <span class="material-symbols-rounded">account_balance</span>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--spacing-lg); margin-bottom: var(--spacing-lg);">
+      <!-- Carteira Física -->
+      <div class="bank-total-banner" style="background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); margin-bottom: 0;">
+        <div class="bank-total-inner" style="background: linear-gradient(135deg, rgba(27, 94, 32, 0.95) 0%, rgba(46, 125, 50, 0.95) 100%); padding: var(--spacing-md) var(--spacing-lg); align-items: center; justify-content: space-between; flex-direction: row;">
+          <div class="flex items-center gap-md">
+            <div class="bank-total-icon" style="background: rgba(255, 255, 255, 0.2); color: #fff;">
+              <span class="material-symbols-rounded">payments</span>
+            </div>
+            <div class="bank-total-info">
+              <p class="bank-total-label" style="font-size: 14px; opacity: 0.9;">Carteira (Dinheiro)</p>
+              <p class="bank-total-value" style="font-size: 24px;">${formatCurrency(walletBalance)}</p>
+            </div>
+          </div>
+          <button class="btn-icon-light" id="btn-edit-wallet" title="Ajustar Dinheiro" style="background: rgba(255,255,255,0.15); border-radius: 50%; padding: 8px; border: none; color: white; cursor: pointer;">
+            <span class="material-symbols-rounded" style="font-size: 20px;">edit</span>
+          </button>
         </div>
-        <div class="bank-total-info">
-          <p class="bank-total-label">Saldo Total em Contas</p>
-          <p class="bank-total-value">${formatCurrency(totalBalance)}</p>
-        </div>
-        <div class="bank-total-count">
-          <span class="bank-total-count-number">${accounts.length}</span>
-          <span class="bank-total-count-label">${accounts.length === 1 ? 'conta' : 'contas'}</span>
+      </div>
+
+      <!-- Total Balance Banner -->
+      <div class="bank-total-banner" style="margin-bottom: 0;">
+        <div class="bank-total-inner" style="padding: var(--spacing-md) var(--spacing-lg); align-items: center;">
+          <div class="flex items-center gap-md">
+            <div class="bank-total-icon">
+              <span class="material-symbols-rounded">account_balance</span>
+            </div>
+            <div class="bank-total-info">
+              <p class="bank-total-label" style="font-size: 14px; opacity: 0.9;">Saldo Total (Contas + Carteira)</p>
+              <p class="bank-total-value" style="font-size: 24px;">${formatCurrency(totalBalance)}</p>
+            </div>
+          </div>
+          <div class="bank-total-count" style="margin-left: auto;">
+            <span class="bank-total-count-number">${accounts.length}</span>
+            <span class="bank-total-count-label">${accounts.length === 1 ? 'conta' : 'contas'}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -213,6 +238,27 @@ function openAccountModal(existingAccount = null) {
 }
 
 export function initContas() {
+  // Edit wallet
+  document.getElementById('btn-edit-wallet')?.addEventListener('click', () => {
+    const settings = getSettings();
+    openModal('Ajustar Dinheiro na Carteira', `
+      <form id="form-wallet" class="modal-form">
+        <p style="margin-bottom: var(--spacing-lg);">Atualize o valor físico em dinheiro que você tem na carteira.</p>
+        <div class="form-group">
+          <label for="wallet-balance">Saldo Atual (R$)</label>
+          <input type="number" id="wallet-balance" name="walletBalance" value="${settings.walletBalance || 0}" step="0.01" required />
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
+          <span class="material-symbols-rounded">save</span>
+          Salvar Valor
+        </button>
+      </form>
+    `, (data) => {
+      updateSettings({ walletBalance: parseFloat(data.walletBalance) });
+      window.location.hash = 'contas';
+    });
+  });
+
   // New account
   document.getElementById('btn-new-account')?.addEventListener('click', () => openAccountModal());
   document.getElementById('btn-new-account-empty')?.addEventListener('click', () => openAccountModal());

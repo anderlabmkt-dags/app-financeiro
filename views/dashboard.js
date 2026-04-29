@@ -416,7 +416,7 @@ export function initDashboard() {
       const paymentSourceId = data.paymentSource;
       let paymentSourceName = '';
 
-      // Atualizar cartão ou conta bancária
+      // Atualizar cartão ou conta bancária ou dinheiro
       if (data.type === 'expense' && paymentMethod === 'credit_card' && paymentSourceId) {
         const card = cards.find(c => c.id === paymentSourceId);
         if (card) {
@@ -429,6 +429,10 @@ export function initDashboard() {
           updateBankAccount(account.id, { balance: account.balance - amount });
           paymentSourceName = `${account.bankName}`;
         }
+      } else if (data.type === 'expense' && paymentMethod === 'cash') {
+        const settings = getSettings();
+        updateSettings({ walletBalance: (settings.walletBalance || 0) - amount });
+        paymentSourceName = 'Dinheiro Físico';
       }
 
       addTransaction({
