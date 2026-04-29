@@ -23,9 +23,9 @@ function defaultTransactions() {
 
   return [
     { id: crypto.randomUUID(), description: 'Supermercado Pão de Açúcar', category: 'Alimentação', type: 'expense', amount: 450, date: fmt(today), icon: 'shopping_cart' },
-    { id: crypto.randomUUID(), description: 'Salário Mensal - TechCorp', category: 'Renda', type: 'income', amount: 6500, date: fmt(daysAgo(1)), icon: 'work' },
+    { id: crypto.randomUUID(), description: 'Salário Mensal - TechCorp', category: 'Salário', type: 'income', amount: 6500, date: fmt(daysAgo(1)), icon: 'payments' },
     { id: crypto.randomUUID(), description: 'Uber - Corrida', category: 'Transporte', type: 'expense', amount: 32.50, date: fmt(daysAgo(1)), icon: 'directions_car' },
-    { id: crypto.randomUUID(), description: 'Freelance Design', category: 'Renda', type: 'income', amount: 1750, date: fmt(daysAgo(2)), icon: 'palette' },
+    { id: crypto.randomUUID(), description: 'Freelance Design', category: 'Freela - Design', type: 'income', amount: 1750, date: fmt(daysAgo(2)), icon: 'palette' },
     { id: crypto.randomUUID(), description: 'Netflix', category: 'Entretenimento', type: 'expense', amount: 55.90, date: fmt(daysAgo(3)), icon: 'movie' },
     { id: crypto.randomUUID(), description: 'iFood - Almoço', category: 'Alimentação', type: 'expense', amount: 89, date: fmt(daysAgo(3)), icon: 'restaurant' },
     { id: crypto.randomUUID(), description: 'Farmácia Raia', category: 'Saúde', type: 'expense', amount: 124, date: fmt(daysAgo(4)), icon: 'local_pharmacy' },
@@ -334,6 +334,17 @@ export const CATEGORY_ICONS = {
   'Educação': 'menu_book',
   'Moradia': 'home',
   'Renda': 'work',
+  'Salário': 'payments',
+  'Freela - Site': 'web',
+  'Freela - GMN': 'work_outline',
+  'Freelancer - GT': 'work_history',
+  'Freela - Design': 'palette',
+  'Freela - Social Media': 'thumb_up',
+  'Freela - CRM': 'support_agent',
+  'Freelancer': 'laptop_mac',
+  'Empréstimo': 'account_balance',
+  'Rendimentos': 'trending_up',
+  'Cashback': 'savings',
   'Outros': 'more_horiz',
 };
 
