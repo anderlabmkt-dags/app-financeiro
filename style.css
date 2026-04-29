@@ -868,6 +868,171 @@ button {
   }
 }
 
+/* ========================
+   BANK ACCOUNTS
+   ======================== */
+.bank-total-banner {
+  background: linear-gradient(135deg, #1565C0 0%, #0D47A1 40%, #283593 100%);
+  border-radius: var(--radius-xl);
+  padding: 3px;
+  animation: fadeInScale 0.5s ease-out forwards;
+  box-shadow: 0 8px 32px rgba(21, 101, 192, 0.25);
+}
+
+.bank-total-inner {
+  background: linear-gradient(135deg, rgba(21, 101, 192, 0.95) 0%, rgba(13, 71, 161, 0.95) 40%, rgba(40, 53, 147, 0.95) 100%);
+  border-radius: calc(var(--radius-xl) - 2px);
+  padding: var(--spacing-xl) var(--spacing-2xl);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+.bank-total-inner::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.bank-total-inner::after {
+  content: '';
+  position: absolute;
+  bottom: -60%;
+  left: 10%;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.bank-total-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.bank-total-icon .material-symbols-rounded {
+  font-size: 28px;
+}
+
+.bank-total-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.bank-total-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.bank-total-value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: white;
+  font-family: var(--font-data);
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.bank-total-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(8px);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  flex-shrink: 0;
+}
+
+.bank-total-count-number {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: white;
+  font-family: var(--font-data);
+  line-height: 1;
+}
+
+.bank-total-count-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Bank Card Visual overrides */
+.bank-account-visual .cc-centered-data {
+  justify-content: flex-end;
+  padding-bottom: var(--spacing-sm);
+}
+
+.bank-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  z-index: 2;
+}
+
+.bank-card-bank-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.bank-card-bank-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  line-height: 1.2;
+}
+
+.bank-card-account-type {
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 500;
+}
+
+@media (max-width: 600px) {
+  .bank-total-inner {
+    flex-direction: column;
+    text-align: center;
+    padding: var(--spacing-lg);
+    gap: var(--spacing-md);
+  }
+
+  .bank-total-value {
+    font-size: 1.6rem;
+  }
+
+  .bank-total-count {
+    flex-direction: row;
+    gap: var(--spacing-sm);
+  }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

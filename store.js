@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   transactions: 'fp_transactions',
   cards: 'fp_cards',
   debts: 'fp_debts',
+  bankAccounts: 'fp_bank_accounts',
   settings: 'fp_settings',
 };
 
@@ -59,6 +60,47 @@ function defaultCards() {
       invoice: 840,
       dueDate: '2026-05-10',
       color: 'linear-gradient(135deg, #2e4ed2 0%, #4b69ec 100%)',
+    },
+  ];
+}
+
+function defaultBankAccounts() {
+  return [
+    {
+      id: crypto.randomUUID(),
+      bankName: 'Nubank',
+      accountType: 'Conta Corrente',
+      agency: '0001',
+      accountNumber: '123456-7',
+      holder: 'DIEGO RODRIGUES',
+      balance: 4250.80,
+      color: 'linear-gradient(135deg, #7B1FA2 0%, #AB47BC 100%)',
+      imageUrl: '',
+      icon: 'account_balance',
+    },
+    {
+      id: crypto.randomUUID(),
+      bankName: 'Inter',
+      accountType: 'Conta Corrente',
+      agency: '0001',
+      accountNumber: '987654-3',
+      holder: 'DIEGO RODRIGUES',
+      balance: 12780.50,
+      color: 'linear-gradient(135deg, #E65100 0%, #FF8F00 100%)',
+      imageUrl: '',
+      icon: 'account_balance',
+    },
+    {
+      id: crypto.randomUUID(),
+      bankName: 'Bradesco',
+      accountType: 'Poupança',
+      agency: '3456',
+      accountNumber: '654321-0',
+      holder: 'DIEGO RODRIGUES',
+      balance: 8500.00,
+      color: 'linear-gradient(135deg, #C62828 0%, #E53935 100%)',
+      imageUrl: '',
+      icon: 'savings',
     },
   ];
 }
@@ -152,6 +194,33 @@ export function updateCard(id, updates) {
 export function deleteCard(id) {
   const cards = getCards().filter(c => c.id !== id);
   save(STORAGE_KEYS.cards, cards);
+}
+
+// ---------- Bank Accounts ----------
+export function getBankAccounts() {
+  return load(STORAGE_KEYS.bankAccounts, defaultBankAccounts);
+}
+
+export function addBankAccount(account) {
+  const accounts = getBankAccounts();
+  account.id = account.id || crypto.randomUUID();
+  accounts.push(account);
+  save(STORAGE_KEYS.bankAccounts, accounts);
+  return account;
+}
+
+export function updateBankAccount(id, updates) {
+  const accounts = getBankAccounts().map(a => a.id === id ? { ...a, ...updates } : a);
+  save(STORAGE_KEYS.bankAccounts, accounts);
+}
+
+export function deleteBankAccount(id) {
+  const accounts = getBankAccounts().filter(a => a.id !== id);
+  save(STORAGE_KEYS.bankAccounts, accounts);
+}
+
+export function getTotalBankBalance() {
+  return getBankAccounts().reduce((sum, a) => sum + a.balance, 0);
 }
 
 // ---------- Debts ----------
@@ -273,4 +342,15 @@ export const CARD_COLORS = [
   'linear-gradient(135deg, #6b21a8 0%, #9333ea 100%)',
   'linear-gradient(135deg, #064e3b 0%, #059669 100%)',
   'linear-gradient(135deg, #7c2d12 0%, #c2410c 100%)',
+];
+
+export const BANK_COLORS = [
+  'linear-gradient(135deg, #7B1FA2 0%, #AB47BC 100%)',
+  'linear-gradient(135deg, #E65100 0%, #FF8F00 100%)',
+  'linear-gradient(135deg, #C62828 0%, #E53935 100%)',
+  'linear-gradient(135deg, #1565C0 0%, #42A5F5 100%)',
+  'linear-gradient(135deg, #1a1c1e 0%, #2f3033 100%)',
+  'linear-gradient(135deg, #00695C 0%, #26A69A 100%)',
+  'linear-gradient(135deg, #F9A825 0%, #FFD54F 100%)',
+  'linear-gradient(135deg, #283593 0%, #5C6BC0 100%)',
 ];

@@ -1,6 +1,7 @@
 import './style.css'
 import { renderDashboard, initDashboard } from './views/dashboard.js'
 import { renderCartoes, initCartoes } from './views/cartoes.js'
+import { renderContas, initContas } from './views/contas.js'
 import { renderDividas, initDividas } from './views/dividas.js'
 
 const mainContent = document.getElementById('main-content');
@@ -11,6 +12,7 @@ const sidebarToggle = document.getElementById('sidebar-toggle');
 const routes = {
   dashboard: { render: renderDashboard, init: initDashboard },
   cartoes: { render: renderCartoes, init: initCartoes },
+  contas: { render: renderContas, init: initContas },
   dividas: { render: renderDividas, init: initDividas },
   default: { 
     render: (title) => `<h2>${title}</h2><p class="text-muted">Em breve...</p>`, 
