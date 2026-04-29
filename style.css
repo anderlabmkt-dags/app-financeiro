@@ -983,15 +983,10 @@ button {
 }
 
 /* Bank Card Visual overrides */
-.bank-account-visual .cc-centered-data {
-  justify-content: flex-end;
-  padding-bottom: var(--spacing-sm);
-}
-
 .bank-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   position: relative;
   z-index: 2;
 }

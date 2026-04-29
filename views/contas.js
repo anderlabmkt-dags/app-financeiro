@@ -100,14 +100,14 @@ function renderBankAccountItem(account) {
               <p class="bank-card-account-type">${account.accountType}</p>
             </div>
           </div>
+
+          <div class="bank-card-balance-top" style="text-align: right;">
+            <p class="cc-label" style="opacity: 0.8; margin-bottom: -2px; font-size: 11px;">Saldo Disponível</p>
+            <div class="cc-invoice-large" style="font-size: 24px; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">${formatCurrency(account.balance)}</div>
+          </div>
         </div>
 
-        <div class="cc-centered-data">
-          <p class="cc-label" style="opacity: 0.8; margin-bottom: -5px;">Saldo Disponível</p>
-          <div class="cc-invoice-large">${formatCurrency(account.balance)}</div>
-        </div>
-
-        <div class="cc-actions">
+        <div class="cc-actions" style="top: auto; bottom: var(--spacing-md);">
           <button class="btn-icon-light btn-edit-account" data-id="${account.id}" title="Editar">
             <span class="material-symbols-rounded">edit</span>
           </button>
