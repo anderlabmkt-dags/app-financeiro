@@ -71,7 +71,6 @@ export function renderCartoes() {
 }
 
 function renderCardItem(card) {
-  const usedPercent = Math.round((card.invoice / card.limit) * 100);
   const backgroundStyle = card.imageUrl 
     ? `background: url('${card.imageUrl}') center/cover no-repeat;` 
     : `background: ${card.color};`;
@@ -80,29 +79,12 @@ function renderCardItem(card) {
     <div class="credit-card-visual" style="${backgroundStyle}" data-id="${card.id}">
       ${card.imageUrl ? '<div class="cc-overlay"></div>' : ''}
       <div class="cc-content-wrapper">
-        <div class="cc-top">
-          <div class="cc-brand">${card.brand}</div>
-          <div style="text-align: right;">
-            <p class="cc-label">Saldo Disponível</p>
-            <h3 class="cc-balance">${formatCurrency(card.limit - card.invoice)}</h3>
-          </div>
+        <div class="cc-centered-data">
+          <p class="cc-label" style="opacity: 0.8; margin-bottom: -5px;">Valor da Fatura</p>
+          <div class="cc-invoice-large">${formatCurrency(card.invoice)}</div>
+          <div class="cc-limit-small">Limite Disponível: ${formatCurrency(card.limit - card.invoice)}</div>
         </div>
-        <div class="cc-middle">
-          <span class="material-symbols-rounded" style="font-size: 32px; opacity: 0.8;">contactless</span>
-        </div>
-        <div class="cc-bottom">
-          <div>
-            <p class="cc-number">**** **** **** ${card.lastDigits}</p>
-            <p class="cc-holder">${card.holder}</p>
-          </div>
-          <div class="cc-expiry">
-            <p class="cc-label">VALIDADE</p>
-            <p style="font-weight: 600;">${card.expiry}</p>
-          </div>
-        </div>
-        <div class="cc-invoice-overlay">
-          <span>Fatura: ${formatCurrency(card.invoice)}</span>
-        </div>
+        
         <div class="cc-actions">
           <button class="btn-icon-light btn-edit-card" data-id="${card.id}" title="Editar">
             <span class="material-symbols-rounded">edit</span>

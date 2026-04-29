@@ -82,4 +82,10 @@ window.addEventListener('hashchange', () => {
   navigate(hash);
 });
 
+// Auto-refresh on data change
+window.addEventListener('store-updated', () => {
+  const hash = window.location.hash.replace('#', '') || 'dashboard';
+  navigate(hash);
+});
+
 console.log('🚀 FinançasPro inicializado!');
