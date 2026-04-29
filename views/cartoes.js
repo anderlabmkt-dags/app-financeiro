@@ -79,16 +79,16 @@ function renderCardItem(card) {
   return `
     <div class="credit-card-visual" style="${backgroundStyle}" data-id="${card.id}">
       ${card.imageUrl ? '<div class="cc-overlay"></div>' : ''}
-      <div class="cc-content-wrapper" style="position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+      <div class="cc-content-wrapper">
         <div class="cc-top">
-          <div>
+          <div class="cc-brand">${card.brand}</div>
+          <div style="text-align: right;">
             <p class="cc-label">Saldo Disponível</p>
             <h3 class="cc-balance">${formatCurrency(card.limit - card.invoice)}</h3>
           </div>
-          <div class="cc-brand">${card.brand}</div>
         </div>
-        <div class="cc-chip">
-          <span class="material-symbols-rounded" style="font-size: 36px; opacity: 0.8;">contactless</span>
+        <div class="cc-middle">
+          <span class="material-symbols-rounded" style="font-size: 32px; opacity: 0.8;">contactless</span>
         </div>
         <div class="cc-bottom">
           <div>
