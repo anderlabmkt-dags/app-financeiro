@@ -48,6 +48,8 @@ export function renderDashboard() {
 
   const balanceSign = balance >= 0 ? 'text-success' : 'text-error';
 
+  const weekly = getWeeklyExpenses();
+
   let limitColor = 'var(--color-accent)';
   if (limitPercent > 90) limitColor = 'var(--color-error)';
   else if (limitPercent > 70) limitColor = '#e67e22';
@@ -108,7 +110,8 @@ export function renderDashboard() {
 
     <div class="dashboard-grid-2">
       <div class="card">
-        <h3 style="margin-bottom: var(--spacing-lg);">Gastos da Semana</h3>
+        <h3 style="margin-bottom: var(--spacing-sm);">Gastos da Semana</h3>
+        <p class="text-muted" style="margin-bottom: var(--spacing-md); font-size: 14px;">Total: <span class="text-error" style="font-weight: 700;">${formatCurrency(weekly.data.reduce((a, b) => a + b, 0))}</span></p>
         <div style="height: 300px; width: 100%;">
           <canvas id="weeklyChart"></canvas>
         </div>
