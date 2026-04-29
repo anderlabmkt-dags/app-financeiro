@@ -289,23 +289,25 @@ export function getBalance(month = new Date().getMonth(), year = new Date().getF
 export function getWeeklyExpenses() {
   const today = new Date();
   const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-  const result = Array(7).fill(0);
   const txs = getTransactions().filter(t => t.type === 'expense');
-
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (6 - i));
-    const dateStr = d.toISOString().split('T')[0];
-    result[i] = txs.filter(t => t.date === dateStr).reduce((s, t) => s + t.amount, 0);
-  }
-
+  
+  const getDayExpenses = (date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return txs.filter(t => t.date === dateStr).reduce((s, t) => s + t.amount, 0);
+  };
+  
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay());
+  
   const labels = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (6 - i));
+  const result = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
     labels.push(days[d.getDay()]);
+    result.push(getDayExpenses(d));
   }
-
+  
   return { labels, data: result };
 }
 
