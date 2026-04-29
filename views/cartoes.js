@@ -72,38 +72,45 @@ export function renderCartoes() {
 
 function renderCardItem(card) {
   const usedPercent = Math.round((card.invoice / card.limit) * 100);
+  const backgroundStyle = card.imageUrl 
+    ? `background: url('${card.imageUrl}') center/cover no-repeat;` 
+    : `background: ${card.color};`;
+
   return `
-    <div class="credit-card-visual" style="background: ${card.color};" data-id="${card.id}">
-      <div class="cc-top">
-        <div>
-          <p class="cc-label">Saldo Disponível</p>
-          <h3 class="cc-balance">${formatCurrency(card.limit - card.invoice)}</h3>
+    <div class="credit-card-visual" style="${backgroundStyle}" data-id="${card.id}">
+      ${card.imageUrl ? '<div class="cc-overlay"></div>' : ''}
+      <div class="cc-content-wrapper" style="position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="cc-top">
+          <div>
+            <p class="cc-label">Saldo Disponível</p>
+            <h3 class="cc-balance">${formatCurrency(card.limit - card.invoice)}</h3>
+          </div>
+          <div class="cc-brand">${card.brand}</div>
         </div>
-        <div class="cc-brand">${card.brand}</div>
-      </div>
-      <div class="cc-chip">
-        <span class="material-symbols-rounded" style="font-size: 36px; opacity: 0.8;">contactless</span>
-      </div>
-      <div class="cc-bottom">
-        <div>
-          <p class="cc-number">**** **** **** ${card.lastDigits}</p>
-          <p class="cc-holder">${card.holder}</p>
+        <div class="cc-chip">
+          <span class="material-symbols-rounded" style="font-size: 36px; opacity: 0.8;">contactless</span>
         </div>
-        <div class="cc-expiry">
-          <p class="cc-label">VALIDADE</p>
-          <p style="font-weight: 600;">${card.expiry}</p>
+        <div class="cc-bottom">
+          <div>
+            <p class="cc-number">**** **** **** ${card.lastDigits}</p>
+            <p class="cc-holder">${card.holder}</p>
+          </div>
+          <div class="cc-expiry">
+            <p class="cc-label">VALIDADE</p>
+            <p style="font-weight: 600;">${card.expiry}</p>
+          </div>
         </div>
-      </div>
-      <div class="cc-invoice-overlay">
-        <span>Fatura: ${formatCurrency(card.invoice)}</span>
-      </div>
-      <div class="cc-actions">
-        <button class="btn-icon-light btn-edit-card" data-id="${card.id}" title="Editar">
-          <span class="material-symbols-rounded">edit</span>
-        </button>
-        <button class="btn-icon-light btn-delete-card" data-id="${card.id}" title="Excluir">
-          <span class="material-symbols-rounded">delete</span>
-        </button>
+        <div class="cc-invoice-overlay">
+          <span>Fatura: ${formatCurrency(card.invoice)}</span>
+        </div>
+        <div class="cc-actions">
+          <button class="btn-icon-light btn-edit-card" data-id="${card.id}" title="Editar">
+            <span class="material-symbols-rounded">edit</span>
+          </button>
+          <button class="btn-icon-light btn-delete-card" data-id="${card.id}" title="Excluir">
+            <span class="material-symbols-rounded">delete</span>
+          </button>
+        </div>
       </div>
       <div class="cc-circle-1"></div>
       <div class="cc-circle-2"></div>
@@ -116,7 +123,7 @@ function openCardModal(existingCard = null) {
   const card = existingCard || {};
   const colorOptions = CARD_COLORS.map((c, i) =>
     `<label class="color-swatch ${card.color === c ? 'active' : ''}" style="background: ${c};">
-      <input type="radio" name="color" value="${c}" ${(card.color === c || (!isEdit && i === 0)) ? 'checked' : ''} />
+      <input type="radio" name="color" value="${c}" ${(card.color === c || (!isEdit && !card.color && i === 0)) ? 'checked' : ''} />
     </label>`
   ).join('');
 
@@ -168,7 +175,11 @@ function openCardModal(existingCard = null) {
         </div>
       </div>
       <div class="form-group">
-        <label>Cor do Cartão</label>
+        <label for="card-image-url">URL da Imagem de Fundo (Opcional)</label>
+        <input type="url" id="card-image-url" name="imageUrl" value="${card.imageUrl || ''}" placeholder="https://exemplo.com/imagem.png" />
+      </div>
+      <div class="form-group">
+        <label>Cor do Cartão (Usada se não houver imagem)</label>
         <div class="color-swatches">${colorOptions}</div>
       </div>
       <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
@@ -187,6 +198,7 @@ function openCardModal(existingCard = null) {
       invoice: parseFloat(data.invoice),
       dueDate: data.dueDate,
       color: data.color,
+      imageUrl: data.imageUrl,
     };
 
     if (isEdit) {
