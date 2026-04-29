@@ -7,30 +7,60 @@ import {
 import { openModal, confirmDialog } from '../modal.js';
 
 let chartInstance = null;
+let selectedPeriod = new Date().getMonth().toString();
+let selectedYear = new Date().getFullYear();
 
 export function renderDashboard() {
-  const income = getMonthlyIncome();
-  const expenses = getMonthlyExpenses();
-  const balance = getBalance();
+  const income = getMonthlyIncome(selectedPeriod, selectedYear);
+  const expenses = getMonthlyExpenses(selectedPeriod, selectedYear);
+  const balance = getBalance(selectedPeriod, selectedYear);
   const settings = getSettings();
-  const txs = getTransactions().slice(0, 8);
-  const limitPercent = Math.min(Math.round((expenses / settings.monthlyLimit) * 100), 100);
-  const remaining = Math.max(settings.monthlyLimit - expenses, 0);
+  
+  let allTxs = getTransactions();
+  if (selectedPeriod !== 'all') {
+    allTxs = allTxs.filter(t => {
+      const d = new Date(t.date + 'T12:00:00');
+      return d.getMonth() === parseInt(selectedPeriod) && d.getFullYear() === selectedYear;
+    });
+  } else {
+    allTxs = allTxs.filter(t => {
+      const d = new Date(t.date + 'T12:00:00');
+      return d.getFullYear() === selectedYear;
+    });
+  }
+  const txs = allTxs.slice(0, 8);
+  
+  const isAnnual = selectedPeriod === 'all';
+  const limitTarget = isAnnual ? settings.monthlyLimit * 12 : settings.monthlyLimit;
+  const limitPercent = Math.min(Math.round((expenses / limitTarget) * 100), 100);
+  const remaining = Math.max(limitTarget - expenses, 0);
 
-  const incomeChange = income > 0 ? '+' + Math.round((income / 8000) * 100 - 100) + '%' : '0%';
   const balanceSign = balance >= 0 ? 'text-success' : 'text-error';
 
   let limitColor = 'var(--color-accent)';
   if (limitPercent > 90) limitColor = 'var(--color-error)';
   else if (limitPercent > 70) limitColor = '#e67e22';
 
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  const monthOptions = monthNames.map((m, i) => `<option value="${i}" ${selectedPeriod === i.toString() ? 'selected' : ''}>${m}</option>`).join('');
+  
+  const currentYear = new Date().getFullYear();
+  const yearOptions = [currentYear - 1, currentYear, currentYear + 1].map(y => `<option value="${y}" ${selectedYear === y ? 'selected' : ''}>${y}</option>`).join('');
+
   return `
-    <header class="flex justify-between items-center">
+    <header class="flex justify-between items-center flex-wrap gap-md" style="margin-bottom: var(--spacing-lg);">
       <div>
         <h2>Visão Geral</h2>
         <p class="text-muted">Bem-vindo de volta, ${settings.userName}. Acompanhe o resumo das suas finanças.</p>
       </div>
-      <div class="flex items-center gap-md">
+      <div class="flex items-center gap-sm">
+        <select id="period-select" class="form-control" style="width: auto; padding: 8px 12px; border-radius: 8px;">
+          <option value="all" ${selectedPeriod === 'all' ? 'selected' : ''}>Ano Todo</option>
+          ${monthOptions}
+        </select>
+        <select id="year-select" class="form-control" style="width: auto; padding: 8px 12px; border-radius: 8px;">
+          ${yearOptions}
+        </select>
         <button class="btn-primary flex items-center gap-sm" id="btn-new-transaction">
           <span class="material-symbols-rounded">add</span>
           Nova Transação
@@ -40,27 +70,27 @@ export function renderDashboard() {
 
     <section class="stat-grid">
       <div class="card stat-card">
-        <span class="text-muted">Saldo do Mês</span>
+        <span class="text-muted">Saldo do Período</span>
         <div class="stat-value ${balanceSign}">${formatCurrency(balance)}</div>
         <div class="${balanceSign} flex items-center gap-xs" style="font-size: 14px;">
           <span class="material-symbols-rounded" style="font-size: 18px;">${balance >= 0 ? 'trending_up' : 'trending_down'}</span>
-          ${balance >= 0 ? 'Positivo este mês' : 'Negativo este mês'}
+          ${balance >= 0 ? 'Positivo no período' : 'Negativo no período'}
         </div>
       </div>
       <div class="card stat-card">
-        <span class="text-muted">Receitas Mensais</span>
+        <span class="text-muted">Receitas do Período</span>
         <div class="stat-value">${formatCurrency(income)}</div>
         <div class="text-success flex items-center gap-xs" style="font-size: 14px;">
           <span class="material-symbols-rounded" style="font-size: 18px;">payments</span>
-          ${getTransactions().filter(t => t.type === 'income').length} entradas
+          ${allTxs.filter(t => t.type === 'income').length} entradas
         </div>
       </div>
       <div class="card stat-card">
-        <span class="text-muted">Despesas Mensais</span>
+        <span class="text-muted">Despesas do Período</span>
         <div class="stat-value text-error">${formatCurrency(expenses)}</div>
         <div class="text-error flex items-center gap-xs" style="font-size: 14px;">
           <span class="material-symbols-rounded" style="font-size: 18px;">arrow_downward</span>
-          ${getTransactions().filter(t => t.type === 'expense').length} saídas
+          ${allTxs.filter(t => t.type === 'expense').length} saídas
         </div>
       </div>
     </section>
@@ -75,7 +105,7 @@ export function renderDashboard() {
 
       <div class="card flex flex-col gap-lg">
         <h3>Limite de Gastos</h3>
-        <p class="text-muted">Meta mensal: ${formatCurrency(settings.monthlyLimit)}</p>
+        <p class="text-muted">Meta ${isAnnual ? 'anual' : 'mensal'}: ${formatCurrency(limitTarget)}</p>
         <div style="margin-top: auto;">
           <div class="flex justify-between" style="margin-bottom: var(--spacing-sm);">
             <span style="font-weight: 600;">Progresso do Limite</span>
@@ -99,8 +129,8 @@ export function renderDashboard() {
 
     <section class="card">
       <div class="flex justify-between items-center" style="margin-bottom: var(--spacing-lg);">
-        <h3>Transações Recentes</h3>
-        <span class="text-muted" style="font-size: 14px; font-weight: 600;">${getTransactions().length} registros</span>
+        <h3>Transações do Período</h3>
+        <span class="text-muted" style="font-size: 14px; font-weight: 600;">${allTxs.length} registros</span>
       </div>
       <div class="transactions-list">
         ${txs.length === 0 ? '<p class="text-muted" style="text-align:center; padding: var(--spacing-xl);">Nenhuma transação registrada.</p>' : ''}
@@ -167,6 +197,17 @@ export function initDashboard() {
       }
     });
   }
+
+  // Selectors listeners
+  document.getElementById('period-select')?.addEventListener('change', (e) => {
+    selectedPeriod = e.target.value;
+    window.dispatchEvent(new Event('hashchange'));
+  });
+
+  document.getElementById('year-select')?.addEventListener('change', (e) => {
+    selectedYear = parseInt(e.target.value);
+    window.dispatchEvent(new Event('hashchange'));
+  });
 
   // New transaction modal
   document.getElementById('btn-new-transaction')?.addEventListener('click', () => {

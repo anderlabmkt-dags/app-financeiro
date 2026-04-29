@@ -258,28 +258,32 @@ export function updateSettings(updates) {
 }
 
 // ---------- Computed helpers ----------
-export function getMonthlyIncome() {
-  const now = new Date();
+export function getMonthlyIncome(month = new Date().getMonth(), year = new Date().getFullYear()) {
   return getTransactions()
     .filter(t => {
-      const d = new Date(t.date);
-      return t.type === 'income' && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      const d = new Date(t.date + 'T12:00:00'); // Prevent timezone shift
+      if (month === 'all') {
+        return t.type === 'income' && d.getFullYear() === parseInt(year);
+      }
+      return t.type === 'income' && d.getMonth() === parseInt(month) && d.getFullYear() === parseInt(year);
     })
     .reduce((sum, t) => sum + t.amount, 0);
 }
 
-export function getMonthlyExpenses() {
-  const now = new Date();
+export function getMonthlyExpenses(month = new Date().getMonth(), year = new Date().getFullYear()) {
   return getTransactions()
     .filter(t => {
-      const d = new Date(t.date);
-      return t.type === 'expense' && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      const d = new Date(t.date + 'T12:00:00');
+      if (month === 'all') {
+        return t.type === 'expense' && d.getFullYear() === parseInt(year);
+      }
+      return t.type === 'expense' && d.getMonth() === parseInt(month) && d.getFullYear() === parseInt(year);
     })
     .reduce((sum, t) => sum + t.amount, 0);
 }
 
-export function getBalance() {
-  return getMonthlyIncome() - getMonthlyExpenses();
+export function getBalance(month = new Date().getMonth(), year = new Date().getFullYear()) {
+  return getMonthlyIncome(month, year) - getMonthlyExpenses(month, year);
 }
 
 export function getWeeklyExpenses() {
