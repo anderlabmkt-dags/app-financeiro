@@ -326,29 +326,228 @@ export function formatDate(dateStr) {
 }
 
 // ---------- Category icons ----------
-export const CATEGORY_ICONS = {
-  'Alimentação': 'restaurant',
-  'Transporte': 'directions_car',
-  'Entretenimento': 'movie',
-  'Saúde': 'local_pharmacy',
-  'Educação': 'menu_book',
-  'Moradia': 'home',
-  'Renda': 'work',
-  'Salário': 'payments',
-  'Freela - Site': 'web',
-  'Freela - GMN': 'work_outline',
-  'Freelancer - GT': 'work_history',
-  'Freela - Design': 'palette',
-  'Freela - Social Media': 'thumb_up',
-  'Freela - CRM': 'support_agent',
-  'Freelancer': 'laptop_mac',
-  'Empréstimo': 'account_balance',
-  'Rendimentos': 'trending_up',
-  'Cashback': 'savings',
-  'Outros': 'more_horiz',
+export const CATEGORY_STRUCTURE = {
+  expense: [
+    {
+      id: 'moradia',
+      name: 'Moradia',
+      icon: 'home',
+      keywords: ['casa', 'apartamento'],
+      subcategories: [
+        { name: 'Aluguel', keywords: ['aluguel', 'locacao'] },
+        { name: 'Financiamento', keywords: ['financiamento', 'parcela casa'] },
+        { name: 'Condomínio', keywords: ['condominio', 'sindico'] },
+        { name: 'IPTU', keywords: ['iptu', 'imposto'] },
+        { name: 'Manutenção da casa', keywords: ['manutencao', 'reparo', 'conserto', 'material de construcao'] }
+      ]
+    },
+    {
+      id: 'alimentacao',
+      name: 'Alimentação',
+      icon: 'restaurant',
+      keywords: ['comida', 'alimentacao'],
+      subcategories: [
+        { name: 'Supermercado', keywords: ['mercado', 'supermercado', 'atacadao', 'carrefour', 'pao de acucar'] },
+        { name: 'Feira', keywords: ['feira', 'hortifruti', 'sacolao'] },
+        { name: 'Restaurante', keywords: ['restaurante', 'almoco', 'jantar'] },
+        { name: 'Delivery', keywords: ['ifood', 'rappi', 'delivery', 'pizza', 'hamburguer'] },
+        { name: 'Padaria / Café', keywords: ['padaria', 'cafe', 'pao', 'starbucks'] }
+      ]
+    },
+    {
+      id: 'transporte',
+      name: 'Transporte',
+      icon: 'directions_car',
+      keywords: ['transporte', 'carro', 'moto'],
+      subcategories: [
+        { name: 'Gasolina', keywords: ['posto', 'gasolina', 'combustivel', 'etanol', 'shell', 'ipiranga'] },
+        { name: 'Uber / 99', keywords: ['uber', '99', 'cabify', 'taxi'] },
+        { name: 'Transporte público', keywords: ['onibus', 'metro', 'cptm', 'trem', 'bilhete unico'] },
+        { name: 'Manutenção do veículo', keywords: ['oficina', 'mecanico', 'pneu', 'oleo'] },
+        { name: 'Estacionamento', keywords: ['estacionamento', 'zona azul', 'valet'] }
+      ]
+    },
+    {
+      id: 'contas',
+      name: 'Contas',
+      icon: 'receipt_long',
+      keywords: ['boleto', 'conta'],
+      subcategories: [
+        { name: 'Energia', keywords: ['luz', 'energia', 'enel', 'cpfl', 'copel'] },
+        { name: 'Água', keywords: ['agua', 'sabesp', 'sanepar', 'copasa'] },
+        { name: 'Internet', keywords: ['internet', 'vivo', 'claro', 'tim', 'oi', 'fibra'] },
+        { name: 'Celular', keywords: ['celular', 'plano', 'recarga', 'vivo', 'claro', 'tim'] },
+        { name: 'Gás', keywords: ['gas', 'comgas', 'botijao'] }
+      ]
+    },
+    {
+      id: 'saude',
+      name: 'Saúde',
+      icon: 'local_pharmacy',
+      keywords: ['saude', 'medico', 'hospital'],
+      subcategories: [
+        { name: 'Farmácia', keywords: ['farmacia', 'remedio', 'droga raia', 'drogasil', 'pague menos'] },
+        { name: 'Plano de saúde', keywords: ['plano de saude', 'amil', 'bradesco saude', 'unimed', 'sulamerica'] },
+        { name: 'Consultas', keywords: ['consulta', 'dentista', 'psicologo', 'terapia'] },
+        { name: 'Exames', keywords: ['exame', 'laboratorio', 'fleury', 'delboni'] }
+      ]
+    },
+    {
+      id: 'educacao',
+      name: 'Educação',
+      icon: 'menu_book',
+      keywords: ['estudo', 'escola'],
+      subcategories: [
+        { name: 'Faculdade', keywords: ['faculdade', 'universidade', 'mensalidade'] },
+        { name: 'Cursos', keywords: ['curso', 'alura', 'udemy', 'ingles'] },
+        { name: 'Livros', keywords: ['livro', 'amazon', 'livraria'] }
+      ]
+    },
+    {
+      id: 'lazer',
+      name: 'Lazer',
+      icon: 'sports_esports',
+      keywords: ['diversao'],
+      subcategories: [
+        { name: 'Cinema', keywords: ['cinema', 'cinemark', 'ingresso'] },
+        { name: 'Bares / Restaurantes', keywords: ['bar', 'boteco', 'chopp', 'cerveja'] },
+        { name: 'Viagens', keywords: ['viagem', 'passagem', 'hotel', 'airbnb', 'voo'] },
+        { name: 'Eventos', keywords: ['show', 'festa', 'balada', 'teatro', 'sympla'] }
+      ]
+    },
+    {
+      id: 'compras',
+      name: 'Compras',
+      icon: 'shopping_bag',
+      keywords: ['compra', 'loja'],
+      subcategories: [
+        { name: 'Roupas', keywords: ['roupa', 'camisa', 'calca', 'sapato', 'tenis', 'renner', 'zara', 'cea'] },
+        { name: 'Eletrônicos', keywords: ['eletronico', 'celular', 'computador', 'kabum', 'pichau'] },
+        { name: 'Beleza / cuidados pessoais', keywords: ['beleza', 'cabelo', 'barbearia', 'salao', 'cosmetico', 'perfume'] },
+        { name: 'Compras online', keywords: ['mercado livre', 'shopee', 'aliexpress', 'amazon', 'shein'] }
+      ]
+    },
+    {
+      id: 'financeiro',
+      name: 'Financeiro',
+      icon: 'account_balance',
+      keywords: ['banco', 'taxa'],
+      subcategories: [
+        { name: 'Fatura do cartão', keywords: ['fatura', 'cartao de credito', 'nubank', 'inter'] },
+        { name: 'Empréstimos', keywords: ['emprestimo', 'parcela'] },
+        { name: 'Juros / taxas', keywords: ['juros', 'taxa', 'tarifa', 'iof'] },
+        { name: 'Investimentos', keywords: ['investimento', 'tesouro', 'acao', 'fii', 'cdb', 'corretora'] }
+      ]
+    },
+    {
+      id: 'assinaturas',
+      name: 'Assinaturas',
+      icon: 'subscriptions',
+      keywords: ['assinatura', 'mensalidade'],
+      subcategories: [
+        { name: 'Streaming', keywords: ['netflix', 'spotify', 'amazon prime', 'disney', 'max', 'hbo'] },
+        { name: 'Apps / softwares', keywords: ['app', 'software', 'adobe', 'microsoft', 'google one', 'icloud'] },
+        { name: 'Serviços recorrentes', keywords: ['academia', 'smartfit', 'clube'] }
+      ]
+    },
+    {
+      id: 'outros',
+      name: 'Outros',
+      icon: 'more_horiz',
+      keywords: [],
+      subcategories: [
+        { name: 'Presentes', keywords: ['presente', 'aniversario', 'casamento'] },
+        { name: 'Doações', keywords: ['doacao', 'ong', 'caridade'] },
+        { name: 'Gastos inesperados', keywords: ['imprevisto', 'multa'] },
+        { name: 'Outros', keywords: [] }
+      ]
+    }
+  ],
+  income: [
+    {
+      id: 'renda',
+      name: 'Renda',
+      icon: 'work',
+      keywords: ['recebimento'],
+      subcategories: [
+        { name: 'Salário', keywords: ['salario', 'pagamento', 'adiantamento'] },
+        { name: 'Freela - Site', keywords: ['site'] },
+        { name: 'Freela - GMN', keywords: ['gmn'] },
+        { name: 'Freelancer - GT', keywords: ['gt'] },
+        { name: 'Freela - Design', keywords: ['design'] },
+        { name: 'Freela - Social Media', keywords: ['social media'] },
+        { name: 'Freela - CRM', keywords: ['crm'] },
+        { name: 'Freelancer', keywords: ['freela'] },
+        { name: 'Empréstimo', keywords: ['emprestimo'] },
+        { name: 'Rendimentos', keywords: ['rendimento', 'dividendo', 'juros'] },
+        { name: 'Cashback', keywords: ['cashback', 'meliuz'] },
+        { name: 'Outros', keywords: [] }
+      ]
+    }
+  ]
 };
 
-export const CATEGORIES = Object.keys(CATEGORY_ICONS);
+export function autoCategorize(description, type = 'expense') {
+  const desc = description.toLowerCase();
+  const categories = CATEGORY_STRUCTURE[type] || [];
+  
+  for (const cat of categories) {
+    for (const sub of cat.subcategories) {
+      if (sub.keywords && sub.keywords.some(kw => desc.includes(kw))) {
+        return { category: `${cat.name} > ${sub.name}`, icon: cat.icon };
+      }
+    }
+    if (cat.keywords && cat.keywords.some(kw => desc.includes(kw))) {
+      return { category: `${cat.name} > ${cat.subcategories[0].name}`, icon: cat.icon };
+    }
+  }
+  return null;
+}
+
+export function getIconForCategory(categoryName) {
+  const mainName = categoryName.split(' > ')[0];
+  
+  for (const type of ['expense', 'income']) {
+    const found = CATEGORY_STRUCTURE[type].find(c => c.name === mainName || c.name === categoryName);
+    if (found) return found.icon;
+    
+    for (const cat of CATEGORY_STRUCTURE[type]) {
+      if (cat.subcategories.some(s => s.name === categoryName)) {
+        return cat.icon;
+      }
+    }
+  }
+  
+  const legacyIcons = {
+    'Entretenimento': 'movie',
+    'Salário': 'payments',
+    'Freela - Site': 'web',
+    'Freela - GMN': 'work_outline',
+    'Freelancer - GT': 'work_history',
+    'Freela - Design': 'palette',
+    'Freela - Social Media': 'thumb_up',
+    'Freela - CRM': 'support_agent',
+    'Freelancer': 'laptop_mac',
+    'Empréstimo': 'account_balance',
+    'Rendimentos': 'trending_up',
+    'Cashback': 'savings',
+    'Outros': 'more_horiz',
+  };
+  return legacyIcons[categoryName] || 'receipt';
+}
+
+export const CATEGORY_ICONS = {};
+export const CATEGORIES = [];
+
+CATEGORY_STRUCTURE.expense.concat(CATEGORY_STRUCTURE.income).forEach(cat => {
+  CATEGORY_ICONS[cat.name] = cat.icon;
+  CATEGORIES.push(cat.name);
+  cat.subcategories.forEach(sub => {
+    CATEGORY_ICONS[sub.name] = cat.icon;
+    CATEGORY_ICONS[`${cat.name} > ${sub.name}`] = cat.icon;
+    CATEGORIES.push(`${cat.name} > ${sub.name}`);
+  });
+});
 
 export const CARD_COLORS = [
   'linear-gradient(135deg, #1a1c1e 0%, #2f3033 100%)',

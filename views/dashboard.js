@@ -2,7 +2,8 @@ import {
   getTransactions, addTransaction, deleteTransaction,
   getMonthlyIncome, getMonthlyExpenses, getBalance,
   getWeeklyExpenses, getSettings, updateSettings,
-  formatCurrency, formatDate, CATEGORIES, CATEGORY_ICONS
+  formatCurrency, formatDate, CATEGORIES, CATEGORY_ICONS,
+  CATEGORY_STRUCTURE, autoCategorize, getIconForCategory
 } from '../store.js';
 import { openModal, confirmDialog } from '../modal.js';
 
@@ -326,13 +327,21 @@ export function initDashboard() {
   // New transaction modal
   document.getElementById('btn-new-transaction')?.addEventListener('click', () => {
     const today = new Date().toISOString().split('T')[0];
-    const categoryOptions = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+    
+    const getCategoryOptions = (type) => {
+      const cats = CATEGORY_STRUCTURE[type] || [];
+      return cats.map(cat => `
+        <optgroup label="${cat.name}">
+          ${cat.subcategories.map(sub => `<option value="${cat.name} > ${sub.name}">${sub.name}</option>`).join('')}
+        </optgroup>
+      `).join('');
+    };
 
     openModal('Nova Transação', `
       <form id="form-transaction" class="modal-form">
         <div class="form-group">
           <label>Tipo</label>
-          <div class="toggle-group">
+          <div class="toggle-group" id="tx-type-group">
             <label class="toggle-option active">
               <input type="radio" name="type" value="expense" checked> Despesa
             </label>
@@ -343,7 +352,7 @@ export function initDashboard() {
         </div>
         <div class="form-group">
           <label for="tx-desc">Descrição</label>
-          <input type="text" id="tx-desc" name="description" placeholder="Ex: Supermercado, Salário..." required />
+          <input type="text" id="tx-desc" name="description" placeholder="Ex: Supermercado, Salário..." required autocomplete="off" />
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -357,7 +366,7 @@ export function initDashboard() {
         </div>
         <div class="form-group">
           <label for="tx-category">Categoria</label>
-          <select id="tx-category" name="category">${categoryOptions}</select>
+          <select id="tx-category" name="category">${getCategoryOptions('expense')}</select>
         </div>
         <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
           <span class="material-symbols-rounded">add</span>
@@ -371,9 +380,20 @@ export function initDashboard() {
         type: data.type,
         amount: parseFloat(data.amount),
         date: data.date,
-        icon: CATEGORY_ICONS[data.category] || 'receipt',
+        icon: getIconForCategory(data.category),
       });
       navigate('dashboard');
+    });
+
+    const descInput = document.getElementById('tx-desc');
+    const catSelect = document.getElementById('tx-category');
+
+    descInput?.addEventListener('blur', () => {
+      const type = document.querySelector('input[name="type"]:checked')?.value || 'expense';
+      const suggestion = autoCategorize(descInput.value, type);
+      if (suggestion) {
+        catSelect.value = suggestion.category;
+      }
     });
 
     // Toggle group
@@ -381,6 +401,15 @@ export function initDashboard() {
       opt.addEventListener('click', () => {
         document.querySelectorAll('.toggle-option').forEach(o => o.classList.remove('active'));
         opt.classList.add('active');
+        const radio = opt.querySelector('input');
+        if (radio) {
+          radio.checked = true;
+          catSelect.innerHTML = getCategoryOptions(radio.value);
+          if (descInput?.value) {
+            const suggestion = autoCategorize(descInput.value, radio.value);
+            if (suggestion) catSelect.value = suggestion.category;
+          }
+        }
       });
     });
   });
