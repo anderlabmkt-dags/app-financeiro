@@ -8,7 +8,7 @@ export function renderCartoes() {
   const cards = getCards();
 
   return `
-    <header class="flex justify-between items-center">
+    <header class="flex justify-between items-center" style="margin-bottom: var(--spacing-lg);">
       <div>
         <h2>Meus Cartões</h2>
         <p class="text-muted">Gerencie seus limites, faturas e configurações de cartões.</p>
@@ -18,6 +18,34 @@ export function renderCartoes() {
         Novo Cartão
       </button>
     </header>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--spacing-lg); margin-bottom: var(--spacing-lg);">
+      <!-- Total Faturas -->
+      <div class="bank-total-banner" style="background: linear-gradient(135deg, #e53935 0%, #c62828 40%, #b71c1c 100%);">
+        <div class="bank-total-inner" style="background: linear-gradient(135deg, rgba(229, 57, 53, 0.95) 0%, rgba(198, 40, 40, 0.95) 40%, rgba(183, 28, 28, 0.95) 100%); padding: var(--spacing-lg) var(--spacing-xl);">
+          <div class="bank-total-icon">
+            <span class="material-symbols-rounded">receipt_long</span>
+          </div>
+          <div class="bank-total-info">
+            <p class="bank-total-label">Total em Faturas</p>
+            <p class="bank-total-value">${formatCurrency(cards.reduce((acc, c) => acc + c.invoice, 0))}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Limite Geral -->
+      <div class="bank-total-banner" style="background: linear-gradient(135deg, #43a047 0%, #2e7d32 40%, #1b5e20 100%);">
+        <div class="bank-total-inner" style="background: linear-gradient(135deg, rgba(67, 160, 71, 0.95) 0%, rgba(46, 125, 50, 0.95) 40%, rgba(27, 94, 32, 0.95) 100%); padding: var(--spacing-lg) var(--spacing-xl);">
+          <div class="bank-total-icon">
+            <span class="material-symbols-rounded">credit_score</span>
+          </div>
+          <div class="bank-total-info">
+            <p class="bank-total-label">Limite Geral dos Cartões</p>
+            <p class="bank-total-value">${formatCurrency(cards.reduce((acc, c) => acc + c.limit, 0))}</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="cards-grid">
       ${cards.map(card => renderCardItem(card)).join('')}
