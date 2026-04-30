@@ -11,18 +11,21 @@ const monthsNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
 export function renderDividas() {
   const debts = getDebts();
   
-  const monthTotal = debts.reduce((sum, d) => {
-    const start = d.startDate ? new Date(d.startDate + 'T12:00:00') : null;
-    if (!start) return sum + d.monthlyPayment; // Fallback
-    
-    const target = new Date(selectedYear, selectedMonth, 1);
-    const diffMonths = (target.getFullYear() - start.getFullYear()) * 12 + (target.getMonth() - start.getMonth());
-    
-    if (diffMonths >= 0 && diffMonths < d.totalInstallments) {
-      return sum + d.monthlyPayment;
-    }
-    return sum;
-  }, 0);
+  const isGeneral = selectedMonth === 'general';
+  const monthTotal = isGeneral 
+    ? debts.reduce((sum, d) => sum + (d.totalInstallments * d.monthlyPayment), 0)
+    : debts.reduce((sum, d) => {
+        const start = d.startDate ? new Date(d.startDate + 'T12:00:00') : null;
+        if (!start) return sum + d.monthlyPayment; // Fallback
+        
+        const target = new Date(selectedYear, selectedMonth, 1);
+        const diffMonths = (target.getFullYear() - start.getFullYear()) * 12 + (target.getMonth() - start.getMonth());
+        
+        if (diffMonths >= 0 && diffMonths < d.totalInstallments) {
+          return sum + d.monthlyPayment;
+        }
+        return sum;
+      }, 0);
 
   const totalDebt = debts.reduce((sum, d) => {
     const remaining = (d.totalInstallments - d.paidInstallments) * d.monthlyPayment;
@@ -45,20 +48,21 @@ export function renderDividas() {
         <p class="text-muted">Acompanhe seus empréstimos e parcelamentos pendentes.</p>
       </div>
       <div class="flex items-center gap-sm">
-         <select id="dividas-month-selector" class="form-control" style="width: auto; font-weight: bold; padding: 8px 12px; border-radius: var(--radius-md); background: var(--color-surface); cursor: pointer;">
-           ${(() => {
-             const options = [];
-             const today = new Date();
-             for (let i = -6; i <= 24; i++) {
-               const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
-               const m = d.getMonth();
-               const y = d.getFullYear();
-               const isSelected = m === selectedMonth && y === selectedYear;
-               options.push(`<option value="${m}-${y}" ${isSelected ? 'selected' : ''}>${monthsNames[m]} ${y}</option>`);
-             }
-             return options.join('');
-           })()}
-         </select>
+<select id="dividas-month-selector" class="form-control" style="width: auto; font-weight: bold; padding: 8px 12px; border-radius: var(--radius-md); background: var(--color-surface); cursor: pointer;">
+            <option value="general" ${selectedMonth === 'general' ? 'selected' : ''}>Balanço Geral</option>
+            ${(() => {
+              const options = [];
+              const today = new Date();
+              for (let i = -6; i <= 24; i++) {
+                const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+                const m = d.getMonth();
+                const y = d.getFullYear();
+                const isSelected = selectedMonth !== 'general' && m === selectedMonth && y === selectedYear;
+                options.push(`<option value="${m}-${y}" ${isSelected ? 'selected' : ''}>${monthsNames[m]} ${y}</option>`);
+              }
+              return options.join('');
+            })()}
+          </select>
         <button class="btn-primary flex items-center gap-sm" id="btn-new-debt">
           <span class="material-symbols-rounded">add</span>
           Nova Dívida
@@ -76,11 +80,11 @@ export function renderDividas() {
         </div>
       </div>
       <div class="card stat-card">
-        <span class="text-muted">Parcelas no Mês Escolhido</span>
+        <span class="text-muted">${isGeneral ? 'Total de Todas as Parcelas' : 'Parcelas no Mês Escolhido'}</span>
         <div class="stat-value">${formatCurrency(monthTotal)}</div>
         <div class="text-muted flex items-center gap-xs" style="font-size: 14px;">
           <span class="material-symbols-rounded" style="font-size: 18px;">calendar_month</span>
-          ${monthsNames[selectedMonth]} de ${selectedYear}
+          ${isGeneral ? 'Soma de todas as dívidas' : monthsNames[selectedMonth] + ' de ' + selectedYear}
         </div>
       </div>
       <div class="card stat-card">
@@ -185,9 +189,14 @@ function renderDebtItem(debt) {
 export function initDividas() {
   // Month selector
   document.getElementById('dividas-month-selector')?.addEventListener('change', (e) => {
-    const [m, y] = e.target.value.split('-').map(Number);
-    selectedMonth = m;
-    selectedYear = y;
+    if (e.target.value === 'general') {
+      selectedMonth = 'general';
+      selectedYear = null;
+    } else {
+      const [m, y] = e.target.value.split('-').map(Number);
+      selectedMonth = m;
+      selectedYear = y;
+    }
     window.location.hash = 'dividas';
   });
 
