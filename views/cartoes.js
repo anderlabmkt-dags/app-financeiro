@@ -148,6 +148,7 @@ function renderCardItem(card) {
           <p class="cc-label" style="opacity: 0.8; margin-bottom: -5px;">Fatura (${months[selectedMonth]}/${selectedYear})</p>
           <div class="cc-invoice-large">${formatCurrency(getInvoice(card))}</div>
           <div class="cc-limit-small">Limite Disponível: ${formatCurrency(card.limit - getInvoice(card))}</div>
+          <div class="cc-limit-small" style="opacity: 0.8; margin-top: 4px; font-weight: 400;">Vencimento: Dia ${new Date(card.dueDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit' })}</div>
         </div>
         
         <div class="cc-actions">
