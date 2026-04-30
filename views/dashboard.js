@@ -417,22 +417,37 @@ export function initDashboard() {
       let paymentSourceName = '';
 
       // Atualizar cartão ou conta bancária ou dinheiro
-      if (data.type === 'expense' && paymentMethod === 'credit_card' && paymentSourceId) {
-        const card = cards.find(c => c.id === paymentSourceId);
-        if (card) {
-          updateCard(card.id, { invoice: card.invoice + amount });
-          paymentSourceName = card.name;
+      if (data.type === 'expense') {
+        if (paymentMethod === 'credit_card' && paymentSourceId) {
+          const card = cards.find(c => c.id === paymentSourceId);
+          if (card) {
+            updateCard(card.id, { invoice: (card.invoice || 0) + amount });
+            paymentSourceName = card.name;
+          }
+        } else if (paymentMethod === 'debit' && paymentSourceId) {
+          const account = bankAccounts.find(a => a.id === paymentSourceId);
+          if (account) {
+            updateBankAccount(account.id, { balance: account.balance - amount });
+            paymentSourceName = `${account.bankName}`;
+          }
+        } else if (paymentMethod === 'cash') {
+          const settings = getSettings();
+          updateSettings({ walletBalance: (settings.walletBalance || 0) - amount });
+          paymentSourceName = 'Dinheiro Físico';
         }
-      } else if (data.type === 'expense' && paymentMethod === 'debit' && paymentSourceId) {
-        const account = bankAccounts.find(a => a.id === paymentSourceId);
-        if (account) {
-          updateBankAccount(account.id, { balance: account.balance - amount });
-          paymentSourceName = `${account.bankName}`;
+      } else {
+        // Receita
+        if (paymentMethod === 'debit' && paymentSourceId) {
+          const account = bankAccounts.find(a => a.id === paymentSourceId);
+          if (account) {
+            updateBankAccount(account.id, { balance: account.balance + amount });
+            paymentSourceName = `${account.bankName}`;
+          }
+        } else if (paymentMethod === 'cash') {
+          const settings = getSettings();
+          updateSettings({ walletBalance: (settings.walletBalance || 0) + amount });
+          paymentSourceName = 'Dinheiro Físico';
         }
-      } else if (data.type === 'expense' && paymentMethod === 'cash') {
-        const settings = getSettings();
-        updateSettings({ walletBalance: (settings.walletBalance || 0) - amount });
-        paymentSourceName = 'Dinheiro Físico';
       }
 
       addTransaction({
@@ -442,9 +457,9 @@ export function initDashboard() {
         amount: amount,
         date: data.date,
         icon: getIconForCategory(data.category),
-        paymentMethod: data.type === 'expense' ? paymentMethod : undefined,
-        paymentSourceId: data.type === 'expense' ? paymentSourceId : undefined,
-        paymentSourceName: data.type === 'expense' ? paymentSourceName : undefined,
+        paymentMethod: paymentMethod,
+        paymentSourceId: paymentSourceId,
+        paymentSourceName: paymentSourceName,
       });
       navigate('dashboard');
     });
@@ -458,25 +473,40 @@ export function initDashboard() {
 
     // Função para atualizar visibilidade da seção de pagamento
     const updatePaymentUI = (txType) => {
+      const paymentGroup = document.getElementById('tx-payment-group');
+      const creditCardOption = paymentGroup.querySelector('input[value="credit_card"]').parentElement;
+      
       if (txType === 'income') {
-        paymentMethodSection.style.display = 'none';
-        paymentSourceSection.style.display = 'none';
-      } else {
+        creditCardOption.style.display = 'none';
+        // Se o cartão estava selecionado, muda para débito
+        if (document.querySelector('input[name="paymentMethod"]:checked')?.value === 'credit_card') {
+          const debitOption = paymentGroup.querySelector('input[value="debit"]');
+          debitOption.checked = true;
+          debitOption.parentElement.classList.add('active');
+          creditCardOption.classList.remove('active');
+        }
         paymentMethodSection.style.display = '';
-        const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
-        updatePaymentSourceUI(selectedMethod);
+        paymentSourceSection.style.display = '';
+      } else {
+        creditCardOption.style.display = '';
+        paymentMethodSection.style.display = '';
       }
+      
+      const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+      updatePaymentSourceUI(selectedMethod);
     };
 
     // Função para atualizar o dropdown de fontes de pagamento
     const updatePaymentSourceUI = (method) => {
+      const txType = document.querySelector('input[name="type"]:checked')?.value;
+      
       if (method === 'credit_card') {
         paymentSourceSection.style.display = '';
         paymentSourceLabel.textContent = 'Selecione o Cartão';
         paymentSourceSelect.innerHTML = cardOptions || '<option value="">Nenhum cartão cadastrado</option>';
       } else if (method === 'debit') {
         paymentSourceSection.style.display = '';
-        paymentSourceLabel.textContent = 'Selecione a Conta Bancária';
+        paymentSourceLabel.textContent = txType === 'income' ? 'Depositar na Conta' : 'Selecione a Conta Bancária';
         paymentSourceSelect.innerHTML = bankOptions || '<option value="">Nenhuma conta cadastrada</option>';
       } else {
         paymentSourceSection.style.display = 'none';
