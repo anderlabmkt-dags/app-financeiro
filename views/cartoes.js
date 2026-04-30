@@ -209,7 +209,7 @@ function openCardModal(existingCard = null) {
         </div>
         <div class="form-group">
           <label for="card-limit">Limite (R$)</label>
-          <input type="number" id="card-limit" name="limit" value="${card.limit || ''}" step="100" min="100" placeholder="10000" required />
+          <input type="number" id="card-limit" name="limit" value="${card.limit || ''}" placeholder="10000" required />
         </div>
       </div>
       <div class="form-row">
