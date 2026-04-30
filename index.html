@@ -46,9 +46,14 @@
         <div style="margin-top: auto; padding: var(--spacing-md); background: rgba(255,255,255,0.05); border-radius: var(--radius-lg);">
           <p class="text-muted" style="color: rgba(255,255,255,0.5); font-size: 12px; margin-bottom: 4px;">PLANO ATUAL</p>
           <p style="font-weight: 600; margin-bottom: var(--spacing-sm);">Premium Mensal</p>
-          <button id="btn-logout" class="btn-outline btn-sm" style="width: 100%; border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.8);">
-            <span class="material-symbols-rounded" style="font-size: 16px;">logout</span> Sair
-          </button>
+          <div class="flex gap-sm">
+            <button id="btn-change-access" class="btn-outline btn-sm" style="flex: 1; border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.8);" title="Alterar Acesso">
+              <span class="material-symbols-rounded" style="font-size: 16px;">manage_accounts</span>
+            </button>
+            <button id="btn-logout" class="btn-outline btn-sm" style="flex: 1; border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.8);" title="Sair">
+              <span class="material-symbols-rounded" style="font-size: 16px;">logout</span>
+            </button>
+          </div>
         </div>
       </aside>
 

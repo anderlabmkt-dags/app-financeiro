@@ -4,7 +4,8 @@ import { renderCartoes, initCartoes } from './views/cartoes.js'
 import { renderContas, initContas } from './views/contas.js'
 import { renderDividas, initDividas } from './views/dividas.js'
 import { renderLogin, initLogin } from './views/login.js'
-import { isAuthenticated, setAuthenticated } from './store.js'
+import { isAuthenticated, setAuthenticated, getCredentials, updateCredentials } from './store.js'
+import { openModal } from './modal.js'
 
 const mainContent = document.getElementById('main-content');
 const navLinks = document.querySelectorAll('.nav-link');
@@ -91,6 +92,34 @@ sidebarToggle?.addEventListener('click', () => {
 document.getElementById('btn-logout')?.addEventListener('click', () => {
   setAuthenticated(false);
   window.location.hash = 'login';
+});
+
+// Change Access handler
+document.getElementById('btn-change-access')?.addEventListener('click', () => {
+  const creds = getCredentials();
+  
+  openModal('Configurações de Acesso', `
+    <form id="form-change-access" class="modal-form">
+      <div class="form-group">
+        <label for="new-username">Novo Usuário / E-mail</label>
+        <input type="text" id="new-username" name="username" value="${creds.username}" required />
+      </div>
+      <div class="form-group">
+        <label for="new-password">Nova Senha</label>
+        <input type="password" id="new-password" name="password" value="${creds.password}" required />
+      </div>
+      <p class="text-muted" style="font-size: 12px; margin-top: var(--spacing-sm);">
+        Atenção: Ao salvar, você precisará usar estas novas credenciais no próximo login.
+      </p>
+      <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
+        <span class="material-symbols-rounded">save</span>
+        Salvar Novas Credenciais
+      </button>
+    </form>
+  `, (data) => {
+    updateCredentials(data.username, data.password);
+    alert('Credenciais atualizadas com sucesso!');
+  });
 });
 
 // Close sidebar when clicking outside on mobile

@@ -20,6 +20,24 @@ export function setAuthenticated(value) {
   localStorage.setItem('fp_auth', value ? 'true' : 'false');
 }
 
+export function getCredentials() {
+  const creds = localStorage.getItem('fp_credentials');
+  if (creds) {
+    return JSON.parse(creds);
+  }
+  // Default inicial
+  return { username: 'admin', password: '123' };
+}
+
+export function updateCredentials(username, password) {
+  localStorage.setItem('fp_credentials', JSON.stringify({ username, password }));
+}
+
+export function validateCredentials(username, password) {
+  const creds = getCredentials();
+  return creds.username === username && creds.password === password;
+}
+
 // ---------- Dados padrão ----------
 function defaultTransactions() {
   const today = new Date();

@@ -1,4 +1,4 @@
-import { setAuthenticated } from '../store.js';
+import { setAuthenticated, validateCredentials, getCredentials } from '../store.js';
 
 export function renderLogin() {
   return `
@@ -27,8 +27,11 @@ export function renderLogin() {
             <span class="material-symbols-rounded" style="font-size: 20px;">login</span>
           </button>
         </form>
+        <div id="login-error" class="text-error" style="display: none; text-align: center; margin-top: var(--spacing-md); font-size: 14px; font-weight: 600;">
+          Usuário ou senha inválidos.
+        </div>
         <p class="text-muted" style="text-align: center; margin-top: var(--spacing-lg); font-size: 13px;">
-          Dica: Para este acesso inicial, use qualquer usuário e senha.
+          Dica: O acesso padrão é <strong>${getCredentials().username}</strong> / <strong>${getCredentials().password}</strong>.
         </p>
       </div>
     </div>
@@ -38,9 +41,15 @@ export function renderLogin() {
 export function initLogin() {
   document.getElementById('form-login')?.addEventListener('submit', (e) => {
     e.preventDefault();
-    // Para simplificar inicialmente, aceitamos qualquer login
-    // Poderia validar: data.get('username') === 'admin' && data.get('password') === '1234'
-    setAuthenticated(true);
-    window.location.hash = 'dashboard';
+    const user = document.getElementById('login-user').value;
+    const pass = document.getElementById('login-pass').value;
+    
+    if (validateCredentials(user, pass)) {
+      setAuthenticated(true);
+      window.location.hash = 'dashboard';
+    } else {
+      const err = document.getElementById('login-error');
+      if(err) err.style.display = 'block';
+    }
   });
 }
