@@ -1,12 +1,25 @@
 import {
   getDebts, addDebt, updateDebt, deleteDebt,
-  formatCurrency
+  getCards, formatCurrency
 } from '../store.js';
 import { openModal, confirmDialog } from '../modal.js';
 
 let selectedMonth = new Date().getMonth();
 let selectedYear = new Date().getFullYear();
 const monthsNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+function getCardInvoice(card) {
+  const key = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
+  if (card.invoices && card.invoices[key] !== undefined) {
+    return card.invoices[key];
+  }
+  const currentM = new Date().getMonth();
+  const currentY = new Date().getFullYear();
+  if (selectedMonth === currentM && selectedYear === currentY) {
+    return card.invoice || 0;
+  }
+  return 0;
+}
 
 export function renderDividas() {
   const debts = getDebts();
@@ -35,6 +48,15 @@ export function renderDividas() {
   const totalInterest = debts.reduce((sum, d) => {
     const remaining = (d.totalInstallments - d.paidInstallments) * d.monthlyPayment;
     return sum + (remaining * d.interestRate / 100 * 12);
+  }, 0);
+
+  const cards = getCards();
+  const cardsMonthTotal = cards.reduce((sum, c) => sum + getCardInvoice(c), 0);
+  const cardsGeneralTotal = cards.reduce((sum, c) => {
+    if (c.invoices) {
+      Object.values(c.invoices).forEach(val => { sum += val; });
+    }
+    return sum + (c.invoice || 0);
   }, 0);
 
   const nextDue = debts.length > 0 ? debts.reduce((min, d) => {
@@ -77,6 +99,14 @@ export function renderDividas() {
         <div class="text-muted flex items-center gap-xs" style="font-size: 14px;">
           <span class="material-symbols-rounded" style="font-size: 18px;">account_balance</span>
           ${debts.length} registro(s)
+        </div>
+      </div>
+      <div class="card stat-card">
+        <span class="text-muted">${isGeneral ? 'Faturas de Todos os Cartões' : 'Faturas dos Cartões'}</span>
+        <div class="stat-value">${formatCurrency(isGeneral ? cardsGeneralTotal : cardsMonthTotal)}</div>
+        <div class="text-muted flex items-center gap-xs" style="font-size: 14px;">
+          <span class="material-symbols-rounded" style="font-size: 18px;">credit_card</span>
+          ${isGeneral ? 'Todas as faturas cadastradas' : monthsNames[selectedMonth] + ' de ' + selectedYear}
         </div>
       </div>
       <div class="card stat-card">
