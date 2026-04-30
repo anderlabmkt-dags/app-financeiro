@@ -117,6 +117,7 @@ function defaultDebts() {
       monthlyPayment: 1250,
       interestRate: 1.2,
       status: 'Em dia',
+      startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
     },
     {
       id: crypto.randomUUID(),
@@ -128,6 +129,7 @@ function defaultDebts() {
       monthlyPayment: 340,
       interestRate: 4.5,
       status: 'Em dia',
+      startDate: new Date(new Date().getFullYear(), new Date().getMonth() - 2, 1).toISOString().split('T')[0],
     },
   ];
 }
