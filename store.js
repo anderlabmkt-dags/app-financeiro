@@ -11,6 +11,15 @@ const STORAGE_KEYS = {
   settings: 'fp_settings',
 };
 
+// ---------- Auth ----------
+export function isAuthenticated() {
+  return localStorage.getItem('fp_auth') === 'true';
+}
+
+export function setAuthenticated(value) {
+  localStorage.setItem('fp_auth', value ? 'true' : 'false');
+}
+
 // ---------- Dados padrão ----------
 function defaultTransactions() {
   const today = new Date();

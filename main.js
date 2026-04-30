@@ -3,6 +3,8 @@ import { renderDashboard, initDashboard } from './views/dashboard.js'
 import { renderCartoes, initCartoes } from './views/cartoes.js'
 import { renderContas, initContas } from './views/contas.js'
 import { renderDividas, initDividas } from './views/dividas.js'
+import { renderLogin, initLogin } from './views/login.js'
+import { isAuthenticated, setAuthenticated } from './store.js'
 
 const mainContent = document.getElementById('main-content');
 const navLinks = document.querySelectorAll('.nav-link');
@@ -14,6 +16,7 @@ const routes = {
   cartoes: { render: renderCartoes, init: initCartoes },
   contas: { render: renderContas, init: initContas },
   dividas: { render: renderDividas, init: initDividas },
+  login: { render: renderLogin, init: initLogin },
   default: { 
     render: (title) => `<h2>${title}</h2><p class="text-muted">Em breve...</p>`, 
     init: () => {} 
@@ -21,6 +24,27 @@ const routes = {
 };
 
 function navigate(routeId) {
+  if (!isAuthenticated() && routeId !== 'login') {
+    window.location.hash = 'login';
+    return;
+  }
+
+  if (isAuthenticated() && routeId === 'login') {
+    window.location.hash = 'dashboard';
+    return;
+  }
+
+  // Handle layout for login screen
+  if (routeId === 'login') {
+    sidebar.style.display = 'none';
+    sidebarToggle.style.display = 'none';
+    document.getElementById('app').style.gridTemplateColumns = '1fr';
+  } else {
+    sidebar.style.display = 'flex';
+    sidebarToggle.style.display = 'flex';
+    document.getElementById('app').style.gridTemplateColumns = '';
+  }
+
   // Update sidebar active state
   navLinks.forEach(link => {
     if (link.dataset.view === routeId) {
@@ -61,6 +85,12 @@ navLinks.forEach(link => {
 // Mobile sidebar toggle
 sidebarToggle?.addEventListener('click', () => {
   sidebar?.classList.toggle('open');
+});
+
+// Logout handler
+document.getElementById('btn-logout')?.addEventListener('click', () => {
+  setAuthenticated(false);
+  window.location.hash = 'login';
 });
 
 // Close sidebar when clicking outside on mobile
