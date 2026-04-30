@@ -1,6 +1,7 @@
 import {
   getCards, addCard, updateCard, deleteCard,
-  addTransaction, formatCurrency, CARD_COLORS
+  addTransaction, formatCurrency, CARD_COLORS,
+  getMonthKey, getTotalAccumulatedInvoice
 } from '../store.js';
 import { openModal, confirmDialog } from '../modal.js';
 
@@ -8,10 +9,6 @@ let selectedMonth = new Date().getMonth();
 let selectedYear = new Date().getFullYear();
 
 const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-
-function getMonthKey(m, y) {
-  return `${y}-${String(m + 1).padStart(2, '0')}`;
-}
 
 function getInvoice(card) {
   const key = getMonthKey(selectedMonth, selectedYear);
@@ -79,19 +76,7 @@ export function renderCartoes() {
           <div class="bank-total-info">
             <p class="bank-total-label">Dívida Total Acumulada</p>
             <p class="bank-total-value">
-              ${formatCurrency(cards.reduce((acc, card) => {
-                let cardTotal = 0;
-                const currentKey = getMonthKey(new Date().getMonth(), new Date().getFullYear());
-                
-                if (card.invoices) {
-                  Object.entries(card.invoices).forEach(([key, val]) => {
-                    if (key >= currentKey) cardTotal += val;
-                  });
-                } else {
-                  cardTotal = card.invoice || 0;
-                }
-                return acc + cardTotal;
-              }, 0))}
+              ${formatCurrency(cards.reduce((acc, card) => acc + getTotalAccumulatedInvoice(card), 0))}
             </p>
           </div>
         </div>
@@ -174,7 +159,7 @@ function renderCardItem(card) {
         <div class="cc-centered-data">
           <p class="cc-label" style="opacity: 0.8; margin-bottom: -5px;">Fatura (${months[selectedMonth]}/${selectedYear})</p>
           <div class="cc-invoice-large">${formatCurrency(getInvoice(card))}</div>
-          <div class="cc-limit-small">Limite Disponível: ${formatCurrency(card.limit - getInvoice(card))}</div>
+          <div class="cc-limit-small">Limite Disponível: ${formatCurrency(card.limit - getTotalAccumulatedInvoice(card))}</div>
           <div class="cc-limit-small" style="opacity: 0.8; margin-top: 4px; font-weight: 400;">Vencimento: Dia ${new Date(card.dueDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit' })}</div>
         </div>
         
@@ -407,7 +392,7 @@ export function initCartoes() {
 
       openModal('Registrar Gasto no Cartão', `
         <form id="form-card-expense" class="modal-form">
-          <p style="margin-bottom: var(--spacing-lg);">Cartão: <strong>${card.name}</strong> — Limite disponível: <strong>${formatCurrency(card.limit - getInvoice(card))}</strong></p>
+          <p style="margin-bottom: var(--spacing-lg);">Cartão: <strong>${card.name}</strong> — Limite disponível: <strong>${formatCurrency(card.limit - getTotalAccumulatedInvoice(card))}</strong></p>
           <div class="form-group">
             <label for="exp-desc">Descrição</label>
             <input type="text" id="exp-desc" name="description" placeholder="Ex: Restaurante, Compras..." required />

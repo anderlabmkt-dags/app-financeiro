@@ -5,7 +5,8 @@ import {
   formatCurrency, formatDate, CATEGORIES, CATEGORY_ICONS,
   CATEGORY_STRUCTURE, autoCategorize, getIconForCategory,
   getCards, updateCard,
-  getBankAccounts, updateBankAccount
+  getBankAccounts, updateBankAccount,
+  getTotalAccumulatedInvoice
 } from '../store.js';
 import { openModal, confirmDialog } from '../modal.js';
 
@@ -348,7 +349,7 @@ export function initDashboard() {
       `).join('');
     };
 
-    const cardOptions = cards.map(c => `<option value="${c.id}">${c.name} (•••• ${c.lastDigits}) — Disp: ${formatCurrency(c.limit - c.invoice)}</option>`).join('');
+    const cardOptions = cards.map(c => `<option value="${c.id}">${c.name} (•••• ${c.lastDigits}) — Disp: ${formatCurrency(c.limit - getTotalAccumulatedInvoice(c))}</option>`).join('');
     const bankOptions = bankAccounts.map(a => `<option value="${a.id}">${a.bankName} - ${a.accountType} — Saldo: ${formatCurrency(a.balance)}</option>`).join('');
 
     openModal('Nova Transação', `

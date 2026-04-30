@@ -265,6 +265,24 @@ export function getTotalBankBalance() {
   return bankSum + walletSum;
 }
 
+export function getMonthKey(m, y) {
+  return `${y}-${String(m + 1).padStart(2, '0')}`;
+}
+
+export function getTotalAccumulatedInvoice(card) {
+  let cardTotal = 0;
+  const currentKey = getMonthKey(new Date().getMonth(), new Date().getFullYear());
+  
+  if (card.invoices) {
+    Object.entries(card.invoices).forEach(([key, val]) => {
+      if (key >= currentKey) cardTotal += val;
+    });
+  } else {
+    cardTotal = card.invoice || 0;
+  }
+  return cardTotal;
+}
+
 // ---------- Debts ----------
 export function getDebts() {
   return load(STORAGE_KEYS.debts, defaultDebts);
