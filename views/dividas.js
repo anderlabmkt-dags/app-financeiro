@@ -227,7 +227,7 @@ export function initDividas() {
       selectedMonth = m;
       selectedYear = y;
     }
-    window.location.hash = 'dividas';
+    window.dispatchEvent(new CustomEvent('store-updated'));
   });
 
   // New debt
@@ -249,7 +249,7 @@ export function initDividas() {
       const ok = await confirmDialog('Excluir Dívida', 'Tem certeza que deseja excluir esta dívida?');
       if (ok) {
         deleteDebt(btn.dataset.id);
-        window.location.hash = 'dividas';
+        window.dispatchEvent(new CustomEvent('store-updated'));
       }
     });
   });
@@ -282,7 +282,7 @@ export function initDividas() {
           updateDebt(debt.id, { status: 'Quitado' });
         }
 
-        window.location.hash = 'dividas';
+        window.dispatchEvent(new CustomEvent('store-updated'));
       });
     });
   });
@@ -337,7 +337,7 @@ export function initDividas() {
         if (newPaid >= debt.totalInstallments) {
           updateDebt(debt.id, { status: 'Quitado' });
         }
-        window.location.hash = 'dividas';
+        window.dispatchEvent(new CustomEvent('store-updated'));
       });
 
       // Live simulation calculation
@@ -427,6 +427,6 @@ function openDebtModal(existingDebt = null) {
     } else {
       addDebt(debtData);
     }
-    window.location.hash = 'dividas';
+    window.dispatchEvent(new CustomEvent('store-updated'));
   });
 }
