@@ -21,7 +21,7 @@ export function renderDashboard() {
   const balance = getBalance(selectedPeriod, selectedYear);
   const settings = getSettings();
   
-  let allTxs = getTransactions();
+  let allTxs = getTransactions().filter(t => !t.ignoreOnDashboard);
   if (selectedPeriod !== 'all') {
     allTxs = allTxs.filter(t => {
       const d = new Date(t.date + 'T12:00:00');
@@ -237,7 +237,7 @@ export function initDashboard() {
     });
   }
 
-  const allTxs = getTransactions().filter(t => {
+  const allTxs = getTransactions().filter(t => !t.ignoreOnDashboard).filter(t => {
       const d = new Date(t.date + 'T12:00:00');
       if (selectedPeriod !== 'all') {
         return d.getMonth() === parseInt(selectedPeriod) && d.getFullYear() === selectedYear;

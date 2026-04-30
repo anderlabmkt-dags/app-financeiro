@@ -305,9 +305,9 @@ export function getMonthlyIncome(month = new Date().getMonth(), year = new Date(
     .filter(t => {
       const d = new Date(t.date + 'T12:00:00'); // Prevent timezone shift
       if (month === 'all') {
-        return t.type === 'income' && d.getFullYear() === parseInt(year);
+        return t.type === 'income' && !t.ignoreOnDashboard && d.getFullYear() === parseInt(year);
       }
-      return t.type === 'income' && d.getMonth() === parseInt(month) && d.getFullYear() === parseInt(year);
+      return t.type === 'income' && !t.ignoreOnDashboard && d.getMonth() === parseInt(month) && d.getFullYear() === parseInt(year);
     })
     .reduce((sum, t) => sum + t.amount, 0);
 }
@@ -317,9 +317,9 @@ export function getMonthlyExpenses(month = new Date().getMonth(), year = new Dat
     .filter(t => {
       const d = new Date(t.date + 'T12:00:00');
       if (month === 'all') {
-        return t.type === 'expense' && d.getFullYear() === parseInt(year);
+        return t.type === 'expense' && !t.ignoreOnDashboard && d.getFullYear() === parseInt(year);
       }
-      return t.type === 'expense' && d.getMonth() === parseInt(month) && d.getFullYear() === parseInt(year);
+      return t.type === 'expense' && !t.ignoreOnDashboard && d.getMonth() === parseInt(month) && d.getFullYear() === parseInt(year);
     })
     .reduce((sum, t) => sum + t.amount, 0);
 }
@@ -331,7 +331,7 @@ export function getBalance(month = new Date().getMonth(), year = new Date().getF
 export function getWeeklyExpenses() {
   const today = new Date();
   const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-  const txs = getTransactions().filter(t => t.type === 'expense');
+  const txs = getTransactions().filter(t => t.type === 'expense' && !t.ignoreOnDashboard);
   
   const getDayExpenses = (date) => {
     const dateStr = date.toISOString().split('T')[0];

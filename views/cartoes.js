@@ -395,6 +395,12 @@ export function initCartoes() {
               <input type="number" id="exp-installments" name="installments" min="1" max="72" value="1" required />
             </div>
           </div>
+          <div class="form-group" style="margin-top: var(--spacing-sm);">
+            <label class="flex items-center gap-sm" style="cursor: pointer; font-weight: normal; font-size: 14px;">
+              <input type="checkbox" id="exp-ignore-dashboard" name="ignoreDashboard" checked />
+              <span>Apenas para registro histórico em cartões (não mostrar no Dashboard)</span>
+            </label>
+          </div>
           <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: var(--spacing-md);">
             <span class="material-symbols-rounded">add_shopping_cart</span>
             Registrar Gasto
@@ -404,6 +410,7 @@ export function initCartoes() {
         const totalAmount = parseFloat(data.amount);
         const installments = parseInt(data.installments, 10) || 1;
         const amountPerInst = totalAmount / installments;
+        const ignoreOnDashboard = data.ignoreDashboard === 'on';
         
         let newInvoices = card.invoices ? { ...card.invoices } : {};
         
@@ -435,7 +442,8 @@ export function initCartoes() {
             date: d.toISOString().split('T')[0],
             icon: 'credit_card',
             paymentMethod: 'credit_card',
-            paymentSourceId: card.id
+            paymentSourceId: card.id,
+            ignoreOnDashboard: ignoreOnDashboard
           });
         }
         
