@@ -56,7 +56,7 @@ export function renderCartoes() {
       </div>
     </header>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--spacing-lg); margin-bottom: var(--spacing-lg);">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--spacing-lg); margin-bottom: var(--spacing-lg);">
       <!-- Total Faturas -->
       <div class="bank-total-banner" style="background: linear-gradient(135deg, #e53935 0%, #c62828 40%, #b71c1c 100%);">
         <div class="bank-total-inner" style="background: linear-gradient(135deg, rgba(229, 57, 53, 0.95) 0%, rgba(198, 40, 40, 0.95) 40%, rgba(183, 28, 28, 0.95) 100%); padding: var(--spacing-lg) var(--spacing-xl);">
@@ -64,8 +64,35 @@ export function renderCartoes() {
             <span class="material-symbols-rounded">receipt_long</span>
           </div>
           <div class="bank-total-info">
-            <p class="bank-total-label">Total em Faturas (${months[selectedMonth]}/${selectedYear})</p>
+            <p class="bank-total-label">Faturas do Mês (${months[selectedMonth]}/${selectedYear})</p>
             <p class="bank-total-value">${formatCurrency(cards.reduce((acc, c) => acc + getInvoice(c), 0))}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Acúmulo Total -->
+      <div class="bank-total-banner" style="background: linear-gradient(135deg, #6a1b9a 0%, #4a148c 100%);">
+        <div class="bank-total-inner" style="background: linear-gradient(135deg, rgba(106, 27, 154, 0.95) 0%, rgba(74, 20, 140, 0.95) 100%); padding: var(--spacing-lg) var(--spacing-xl);">
+          <div class="bank-total-icon">
+            <span class="material-symbols-rounded">account_balance_wallet</span>
+          </div>
+          <div class="bank-total-info">
+            <p class="bank-total-label">Dívida Total Acumulada</p>
+            <p class="bank-total-value">
+              ${formatCurrency(cards.reduce((acc, card) => {
+                let cardTotal = 0;
+                const currentKey = getMonthKey(new Date().getMonth(), new Date().getFullYear());
+                
+                if (card.invoices) {
+                  Object.entries(card.invoices).forEach(([key, val]) => {
+                    if (key >= currentKey) cardTotal += val;
+                  });
+                } else {
+                  cardTotal = card.invoice || 0;
+                }
+                return acc + cardTotal;
+              }, 0))}
+            </p>
           </div>
         </div>
       </div>
