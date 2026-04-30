@@ -40,11 +40,6 @@ export function renderDividas() {
         return sum;
       }, 0);
 
-  const totalInterest = debts.reduce((sum, d) => {
-    const remaining = (d.totalInstallments - d.paidInstallments) * d.monthlyPayment;
-    return sum + (remaining * d.interestRate / 100 * 12);
-  }, 0);
-
   const cards = getCards();
   const cardsMonthTotal = cards.reduce((sum, c) => sum + getCardInvoice(c), 0);
   const cardsGeneralTotal = cards.reduce((sum, c) => sum + getTotalAccumulatedInvoice(c), 0);
