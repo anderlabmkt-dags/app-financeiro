@@ -1,6 +1,6 @@
 import {
   getDebts, addDebt, updateDebt, deleteDebt,
-  getCards, formatCurrency
+  getCards, getTotalAccumulatedInvoice, formatCurrency
 } from '../store.js';
 import { openModal, confirmDialog } from '../modal.js';
 
@@ -52,12 +52,7 @@ export function renderDividas() {
 
   const cards = getCards();
   const cardsMonthTotal = cards.reduce((sum, c) => sum + getCardInvoice(c), 0);
-  const cardsGeneralTotal = cards.reduce((sum, c) => {
-    if (c.invoices) {
-      Object.values(c.invoices).forEach(val => { sum += val; });
-    }
-    return sum + (c.invoice || 0);
-  }, 0);
+  const cardsGeneralTotal = cards.reduce((sum, c) => sum + getTotalAccumulatedInvoice(c), 0);
 
   const nextDue = debts.length > 0 ? debts.reduce((min, d) => {
     return d.paidInstallments < d.totalInstallments ? d : min;
