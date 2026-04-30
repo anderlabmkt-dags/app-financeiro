@@ -179,7 +179,23 @@ export function deleteTransaction(id) {
       const cards = getCards();
       const card = cards.find(c => c.id === tx.paymentSourceId);
       if (card) {
-        updateCard(card.id, { invoice: Math.max(card.invoice - tx.amount, 0) });
+        let updateData = { invoice: Math.max((card.invoice || 0) - tx.amount, 0) };
+        if (tx.date) {
+          const [y, mStr] = tx.date.split('-');
+          const key = `${y}-${mStr}`;
+          if (card.invoices) {
+             let newInvoices = { ...card.invoices };
+             newInvoices[key] = Math.max((newInvoices[key] || 0) - tx.amount, 0);
+             updateData.invoices = newInvoices;
+             const currentM = new Date().getMonth();
+             const currentY = new Date().getFullYear();
+             const currentKey = `${currentY}-${String(currentM + 1).padStart(2, '0')}`;
+             if (key === currentKey) {
+                updateData.invoice = newInvoices[key];
+             }
+          }
+        }
+        updateCard(card.id, updateData);
       }
     } else if (tx.paymentMethod === 'debit') {
       const accounts = getBankAccounts();
