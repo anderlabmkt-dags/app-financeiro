@@ -40,11 +40,6 @@ export function renderDividas() {
         return sum;
       }, 0);
 
-  const totalDebt = debts.reduce((sum, d) => {
-    const remaining = (d.totalInstallments - d.paidInstallments) * d.monthlyPayment;
-    return sum + remaining;
-  }, 0);
-
   const totalInterest = debts.reduce((sum, d) => {
     const remaining = (d.totalInstallments - d.paidInstallments) * d.monthlyPayment;
     return sum + (remaining * d.interestRate / 100 * 12);
@@ -53,6 +48,18 @@ export function renderDividas() {
   const cards = getCards();
   const cardsMonthTotal = cards.reduce((sum, c) => sum + getCardInvoice(c), 0);
   const cardsGeneralTotal = cards.reduce((sum, c) => sum + getTotalAccumulatedInvoice(c), 0);
+  const cardsTotal = isGeneral ? cardsGeneralTotal : cardsMonthTotal;
+
+  const debtsTotal = debts.reduce((sum, d) => {
+    const remaining = (d.totalInstallments - d.paidInstallments) * d.monthlyPayment;
+    return sum + remaining;
+  }, 0);
+  const totalDebt = debtsTotal + cardsTotal;
+
+  const totalInterest = debts.reduce((sum, d) => {
+    const remaining = (d.totalInstallments - d.paidInstallments) * d.monthlyPayment;
+    return sum + (remaining * d.interestRate / 100 * 12);
+  }, 0);
 
   const nextDue = debts.length > 0 ? debts.reduce((min, d) => {
     return d.paidInstallments < d.totalInstallments ? d : min;
@@ -89,11 +96,11 @@ export function renderDividas() {
 
     <section class="stat-grid">
       <div class="card stat-card">
-        <span class="text-muted">Total em Dívidas</span>
+        <span class="text-muted">Total em Dívidas (Dívidas + Cartões)</span>
         <div class="stat-value text-error">${formatCurrency(totalDebt)}</div>
         <div class="text-muted flex items-center gap-xs" style="font-size: 14px;">
           <span class="material-symbols-rounded" style="font-size: 18px;">account_balance</span>
-          ${debts.length} registro(s)
+          ${debts.length} dívida(s) + ${cards.length} cartão(ões)
         </div>
       </div>
       <div class="card stat-card">
