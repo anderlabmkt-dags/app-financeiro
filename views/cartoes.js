@@ -345,18 +345,9 @@ export function initCartoes() {
 
         payCardInvoice(card.id, amount);
 
-        addTransaction({
-          description: `Pagamento fatura - ${card.name} (Acumulado até ${months[selectedMonth]}/${selectedYear})`,
-          category: 'Financeiro > Fatura do cartão',
-          type: 'expense',
-          amount: amount,
-          date: new Date().toISOString().split('T')[0],
-          icon: 'credit_card',
-          paymentMethod: 'debit',
-          paymentSourceId: null
-        });
         window.location.hash = 'cartoes';
       });
+
     });
   });
 
