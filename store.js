@@ -11,6 +11,31 @@ const STORAGE_KEYS = {
   settings: 'fp_settings',
 };
 
+// ---------- Undo System ----------
+const undoStack = [];
+const MAX_UNDO = 30;
+
+function pushToUndoStack() {
+  const snapshot = {};
+  Object.values(STORAGE_KEYS).forEach(key => {
+    snapshot[key] = localStorage.getItem(key);
+  });
+  undoStack.push(snapshot);
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+}
+
+export function undo() {
+  if (undoStack.length === 0) return false;
+  const snapshot = undoStack.pop();
+  Object.entries(snapshot).forEach(([key, value]) => {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  });
+  window.dispatchEvent(new CustomEvent('store-updated', { detail: { key: 'all' } }));
+  return true;
+}
+
+
 // ---------- Auth ----------
 export function isAuthenticated() {
   return localStorage.getItem('fp_auth') === 'true';
@@ -191,6 +216,7 @@ export function getTransactions() {
 }
 
 export function addTransaction(tx) {
+  pushToUndoStack();
   const txs = getTransactions();
   tx.id = tx.id || crypto.randomUUID();
   txs.unshift(tx);
@@ -199,6 +225,7 @@ export function addTransaction(tx) {
 }
 
 export function deleteTransaction(id) {
+  pushToUndoStack();
   const allTxs = getTransactions();
   const tx = allTxs.find(t => t.id === id);
 
@@ -248,6 +275,7 @@ export function getCards() {
 }
 
 export function addCard(card) {
+  pushToUndoStack();
   const cards = getCards();
   card.id = card.id || crypto.randomUUID();
   cards.push(card);
@@ -256,11 +284,13 @@ export function addCard(card) {
 }
 
 export function updateCard(id, updates) {
+  pushToUndoStack();
   const cards = getCards().map(c => c.id === id ? { ...c, ...updates } : c);
   save(STORAGE_KEYS.cards, cards);
 }
 
 export function deleteCard(id) {
+  pushToUndoStack();
   const cards = getCards().filter(c => c.id !== id);
   save(STORAGE_KEYS.cards, cards);
 }
@@ -271,6 +301,7 @@ export function getBankAccounts() {
 }
 
 export function addBankAccount(account) {
+  pushToUndoStack();
   const accounts = getBankAccounts();
   account.id = account.id || crypto.randomUUID();
   accounts.push(account);
@@ -279,11 +310,13 @@ export function addBankAccount(account) {
 }
 
 export function updateBankAccount(id, updates) {
+  pushToUndoStack();
   const accounts = getBankAccounts().map(a => a.id === id ? { ...a, ...updates } : a);
   save(STORAGE_KEYS.bankAccounts, accounts);
 }
 
 export function deleteBankAccount(id) {
+  pushToUndoStack();
   const accounts = getBankAccounts().filter(a => a.id !== id);
   save(STORAGE_KEYS.bankAccounts, accounts);
 }
@@ -399,6 +432,7 @@ export function getDebts() {
 }
 
 export function addDebt(debt) {
+  pushToUndoStack();
   const debts = getDebts();
   debt.id = debt.id || crypto.randomUUID();
   debts.push(debt);
@@ -407,11 +441,13 @@ export function addDebt(debt) {
 }
 
 export function updateDebt(id, updates) {
+  pushToUndoStack();
   const debts = getDebts().map(d => d.id === id ? { ...d, ...updates } : d);
   save(STORAGE_KEYS.debts, debts);
 }
 
 export function deleteDebt(id) {
+  pushToUndoStack();
   const debts = getDebts().filter(d => d.id !== id);
   save(STORAGE_KEYS.debts, debts);
 }
@@ -422,6 +458,7 @@ export function getSettings() {
 }
 
 export function updateSettings(updates) {
+  pushToUndoStack();
   const settings = { ...getSettings(), ...updates };
   save(STORAGE_KEYS.settings, settings);
   return settings;

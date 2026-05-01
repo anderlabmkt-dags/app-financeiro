@@ -4,13 +4,57 @@ import { renderCartoes, initCartoes } from './views/cartoes.js'
 import { renderContas, initContas } from './views/contas.js'
 import { renderDividas, initDividas } from './views/dividas.js'
 import { renderLogin, initLogin } from './views/login.js'
-import { isAuthenticated, setAuthenticated, getCredentials, updateCredentials } from './store.js'
+import { isAuthenticated, setAuthenticated, getCredentials, updateCredentials, undo } from './store.js'
 import { openModal } from './modal.js'
 
 const mainContent = document.getElementById('main-content');
 const navLinks = document.querySelectorAll('.nav-link');
 const sidebar = document.getElementById('sidebar');
 const sidebarToggle = document.getElementById('sidebar-toggle');
+const toastContainer = document.getElementById('toast-container');
+
+// ---------- Toast System ----------
+export function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type} flex items-center gap-sm`;
+  
+  const icons = {
+    info: 'info',
+    success: 'check_circle',
+    error: 'error',
+    undo: 'undo'
+  };
+
+  toast.innerHTML = `
+    <span class="material-symbols-rounded" style="font-size: 20px;">${icons[type] || 'info'}</span>
+    <span>${message}</span>
+  `;
+  
+  toastContainer?.appendChild(toast);
+  
+  // Fade in
+  setTimeout(() => toast.classList.add('show'), 10);
+  
+  // Remove after 3s
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// ---------- Keyboard Shortcuts (Undo) ----------
+document.addEventListener('keydown', (e) => {
+  // Ctrl+Z or Cmd+Z
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    e.preventDefault();
+    const success = undo();
+    if (success) {
+      showToast('Ação desfeita com sucesso!', 'undo');
+    } else {
+      showToast('Nada para desfazer', 'info');
+    }
+  }
+});
 
 const routes = {
   dashboard: { render: renderDashboard, init: initDashboard },
