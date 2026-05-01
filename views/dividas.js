@@ -1,6 +1,7 @@
 import {
   getDebts, addDebt, updateDebt, deleteDebt,
-  getCards, getTotalAccumulatedInvoice, formatCurrency
+  getCards, getTotalAccumulatedInvoice, formatCurrency,
+  getCardInvoiceForMonth, getDebtInstallmentsDue
 } from '../store.js';
 import { openModal, confirmDialog } from '../modal.js';
 
@@ -9,16 +10,8 @@ let selectedYear = new Date().getFullYear();
 const monthsNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
 function getCardInvoice(card) {
-  const key = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
-  if (card.invoices && card.invoices[key] !== undefined) {
-    return card.invoices[key];
-  }
-  const currentM = new Date().getMonth();
-  const currentY = new Date().getFullYear();
-  if (selectedMonth === currentM && selectedYear === currentY) {
-    return card.invoice || 0;
-  }
-  return 0;
+  if (selectedMonth === 'general') return getTotalAccumulatedInvoice(card);
+  return getCardInvoiceForMonth(card, selectedMonth, selectedYear);
 }
 
 export function renderDividas() {
@@ -26,19 +19,12 @@ export function renderDividas() {
   
   const isGeneral = selectedMonth === 'general';
   const monthTotal = isGeneral 
-    ? debts.reduce((sum, d) => sum + (d.totalInstallments * d.monthlyPayment), 0)
+    ? debts.reduce((sum, d) => sum + (Math.max(0, d.totalInstallments - d.paidInstallments) * d.monthlyPayment), 0)
     : debts.reduce((sum, d) => {
-        const start = d.startDate ? new Date(d.startDate + 'T12:00:00') : null;
-        if (!start) return sum + d.monthlyPayment; // Fallback
-        
-        const target = new Date(selectedYear, selectedMonth, 1);
-        const diffMonths = (target.getFullYear() - start.getFullYear()) * 12 + (target.getMonth() - start.getMonth());
-        
-        if (diffMonths >= 0 && diffMonths < d.totalInstallments) {
-          return sum + d.monthlyPayment;
-        }
-        return sum;
+        const dueCount = getDebtInstallmentsDue(d, selectedMonth, selectedYear);
+        return sum + (dueCount * d.monthlyPayment);
       }, 0);
+
 
   const cards = getCards();
   const cardsMonthTotal = cards.reduce((sum, c) => sum + getCardInvoice(c), 0);
@@ -140,6 +126,9 @@ function renderDebtItem(debt) {
   const progress = Math.round((debt.paidInstallments / debt.totalInstallments) * 100);
   const remaining = (debt.totalInstallments - debt.paidInstallments) * debt.monthlyPayment;
   const isComplete = debt.paidInstallments >= debt.totalInstallments;
+  
+  const dueCount = (selectedMonth === 'general') ? 0 : getDebtInstallmentsDue(debt, selectedMonth, selectedYear);
+  const isOverdue = dueCount > 1;
 
   // Simulation: early payment of remaining installments
   const installmentsLeft = debt.totalInstallments - debt.paidInstallments;
@@ -151,15 +140,18 @@ function renderDebtItem(debt) {
   else if (progress >= 50) progressColor = '#e67e22';
 
   return `
-    <div class="card debt-card" data-id="${debt.id}">
+    <div class="card debt-card ${isOverdue ? 'debt-card-overdue' : ''}" data-id="${debt.id}">
       <div class="flex justify-between items-start" style="margin-bottom: var(--spacing-lg);">
         <div>
           <div class="flex items-center gap-sm">
             <h3>${debt.name}</h3>
             ${isComplete ? '<span class="badge badge-success">Quitado</span>' : ''}
+            ${!isComplete && isOverdue ? `<span class="badge badge-danger">${dueCount} Parcelas Acumuladas</span>` : ''}
+            ${!isComplete && dueCount === 1 ? `<span class="badge badge-info">1 Parcela Pendente</span>` : ''}
           </div>
           <p class="text-muted">Parcela ${debt.paidInstallments} de ${debt.totalInstallments} • ${formatCurrency(debt.monthlyPayment)}/mês</p>
         </div>
+
         <div class="flex items-center gap-sm">
           <span class="${debt.interestRate > 3 ? 'badge badge-danger' : 'badge badge-info'}">${debt.interestRate}% a.m</span>
           <button class="btn-icon btn-edit-debt" data-id="${debt.id}" title="Editar">

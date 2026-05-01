@@ -1028,6 +1028,17 @@ button {
   }
 }
 
+/* Estilos para dívidas acumuladas */
+.debt-card-overdue {
+  border-left: 4px solid var(--color-error) !important;
+  background: linear-gradient(to right, rgba(239, 68, 68, 0.05), transparent) !important;
+}
+
+.badge-danger {
+  background-color: var(--color-error);
+  color: white;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

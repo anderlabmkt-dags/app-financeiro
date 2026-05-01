@@ -300,17 +300,98 @@ export function getMonthKey(m, y) {
 
 export function getTotalAccumulatedInvoice(card) {
   let cardTotal = 0;
-  const currentKey = getMonthKey(new Date().getMonth(), new Date().getFullYear());
-  
   if (card.invoices) {
     Object.entries(card.invoices).forEach(([key, val]) => {
-      if (key >= currentKey) cardTotal += val;
+      if (val > 0) cardTotal += val;
     });
   } else {
     cardTotal = card.invoice || 0;
   }
   return cardTotal;
 }
+
+/**
+ * Retorna o valor da fatura para um mês específico, 
+ * incluindo valores não pagos de meses anteriores.
+ */
+export function getCardInvoiceForMonth(card, m, y) {
+  const targetKey = getMonthKey(m, y);
+  let total = 0;
+  
+  if (card.invoices) {
+    Object.entries(card.invoices).forEach(([key, val]) => {
+      if (key <= targetKey && val > 0) {
+        total += val;
+      }
+    });
+  } else {
+    const currentM = new Date().getMonth();
+    const currentY = new Date().getFullYear();
+    const currentKey = getMonthKey(currentM, currentY);
+    if (targetKey === currentKey) total = card.invoice || 0;
+    else if (targetKey > currentKey) total = 0;
+    else if (card.invoice > 0) total = card.invoice;
+  }
+  return total;
+}
+
+/**
+ * Registra o pagamento de uma fatura, distribuindo o valor
+ * começando pelas faturas mais antigas pendentes.
+ */
+export function payCardInvoice(cardId, amount) {
+  const cards = getCards();
+  const card = cards.find(c => c.id === cardId);
+  if (!card) return;
+
+  let remainingPayment = amount;
+  let newInvoices = card.invoices ? { ...card.invoices } : {};
+  
+  if (!card.invoices) {
+    const currentKey = getMonthKey(new Date().getMonth(), new Date().getFullYear());
+    newInvoices[currentKey] = card.invoice || 0;
+  }
+
+  const keys = Object.keys(newInvoices).sort();
+
+  for (const key of keys) {
+    if (remainingPayment <= 0) break;
+    const invoiceAmount = newInvoices[key] || 0;
+    if (invoiceAmount <= 0) continue;
+
+    const paymentToThisMonth = Math.min(remainingPayment, invoiceAmount);
+    newInvoices[key] -= paymentToThisMonth;
+    remainingPayment -= paymentToThisMonth;
+  }
+
+  const currentKey = getMonthKey(new Date().getMonth(), new Date().getFullYear());
+  updateCard(cardId, { 
+    invoices: newInvoices,
+    invoice: newInvoices[currentKey] || 0
+  });
+}
+
+/**
+ * Calcula quantas parcelas de uma dívida estão "devidas" até um mês alvo,
+ * considerando o que já foi pago.
+ */
+export function getDebtInstallmentsDue(debt, targetM, targetY) {
+  if (!debt.startDate || debt.paidInstallments >= debt.totalInstallments) {
+    return 0;
+  }
+
+  const start = new Date(debt.startDate + 'T12:00:00');
+  const target = new Date(targetY, targetM, 1);
+  const diffMonths = (target.getFullYear() - start.getFullYear()) * 12 + (target.getMonth() - start.getMonth());
+  
+  if (diffMonths < 0) return 0;
+
+  const expectedPaidUntilNow = Math.min(diffMonths + 1, debt.totalInstallments);
+  const pending = Math.max(0, expectedPaidUntilNow - debt.paidInstallments);
+  
+  return pending;
+}
+
 
 // ---------- Debts ----------
 export function getDebts() {

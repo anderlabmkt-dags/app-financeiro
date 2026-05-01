@@ -1,7 +1,8 @@
 import {
   getCards, addCard, updateCard, deleteCard,
   addTransaction, formatCurrency, CARD_COLORS,
-  getMonthKey, getTotalAccumulatedInvoice
+  getMonthKey, getTotalAccumulatedInvoice,
+  getCardInvoiceForMonth, payCardInvoice
 } from '../store.js';
 import { openModal, confirmDialog } from '../modal.js';
 
@@ -11,17 +12,9 @@ let selectedYear = new Date().getFullYear();
 const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
 function getInvoice(card) {
-  const key = getMonthKey(selectedMonth, selectedYear);
-  if (card.invoices && card.invoices[key] !== undefined) {
-    return card.invoices[key];
-  }
-  const currentM = new Date().getMonth();
-  const currentY = new Date().getFullYear();
-  if (selectedMonth === currentM && selectedYear === currentY) {
-    return card.invoice || 0;
-  }
-  return 0;
+  return getCardInvoiceForMonth(card, selectedMonth, selectedYear);
 }
+
 
 export function renderCartoes() {
   const cards = getCards();
@@ -337,7 +330,7 @@ export function initCartoes() {
 
       openModal('Pagar Fatura', `
         <form id="form-pay" class="modal-form">
-          <p style="margin-bottom: var(--spacing-lg);">Fatura atual do <strong>${card.name}</strong> (${months[selectedMonth]}/${selectedYear}): <strong class="text-error">${formatCurrency(currentInv)}</strong></p>
+          <p style="margin-bottom: var(--spacing-lg);">Fatura acumulada do <strong>${card.name}</strong> até ${months[selectedMonth]}/${selectedYear}: <strong class="text-error">${formatCurrency(currentInv)}</strong></p>
           <div class="form-group">
             <label for="pay-amount">Valor do Pagamento (R$)</label>
             <input type="number" id="pay-amount" name="amount" step="0.01" min="0.01" max="${currentInv}" value="${currentInv}" required />
@@ -350,31 +343,14 @@ export function initCartoes() {
       `, (data) => {
         const amount = parseFloat(data.amount);
 
-        let newInvoices = card.invoices ? { ...card.invoices } : {};
-        const currentM = new Date().getMonth();
-        const currentY = new Date().getFullYear();
-        const currentKey = getMonthKey(currentM, currentY);
-        
-        if (!card.invoices && card.invoice !== undefined) {
-          newInvoices[currentKey] = card.invoice;
-        }
-
-        const key = getMonthKey(selectedMonth, selectedYear);
-        newInvoices[key] = Math.max((newInvoices[key] || 0) - amount, 0);
-
-        let updateData = { invoices: newInvoices };
-        if (key === currentKey) {
-          updateData.invoice = newInvoices[key];
-        }
-
-        updateCard(card.id, updateData);
+        payCardInvoice(card.id, amount);
 
         addTransaction({
-          description: `Pagamento fatura - ${card.name} (${months[selectedMonth]}/${selectedYear})`,
+          description: `Pagamento fatura - ${card.name} (Acumulado até ${months[selectedMonth]}/${selectedYear})`,
           category: 'Financeiro > Fatura do cartão',
           type: 'expense',
           amount: amount,
-          date: new Date(selectedYear, selectedMonth, new Date().getDate()).toISOString().split('T')[0],
+          date: new Date().toISOString().split('T')[0],
           icon: 'credit_card',
           paymentMethod: 'debit',
           paymentSourceId: null
