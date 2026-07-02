@@ -20,7 +20,4 @@ jobs:
           node-version: '20' # Usando versão 20 que tem suporte nativo ao fetch
 
       - name: Executar verificação de saúde do Supabase
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: node supabase-monitor/index.js

@@ -1,10 +1,11 @@
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
+// URL e Chave configuradas diretamente para facilitar
+const SUPABASE_URL = "https://bgsnwexcoykjtiutobvb.supabase.co";
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.error('ERRO: As variáveis de ambiente SUPABASE_URL e SUPABASE_KEY são obrigatórias.');
-  process.exit(1);
-}
+// ATENÇÃO: A chave abaixo que você enviou retornou "Não Autorizado" nos testes.
+// Geralmente a chave pública do Supabase começa com "eyJ...".
+// Verifique em "Project Settings" > "API" > "anon public"
+const SUPABASE_KEY = "sb_publishable_FT6H24KIBBSodRMiVLbHIg_m3eH6jSO";
+
 
 async function checkSupabaseHealth() {
   const timestamp = new Date().toISOString();
